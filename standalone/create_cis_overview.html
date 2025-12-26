@@ -1,0 +1,3554 @@
+<!doctype html>
+<html lang="en" dir="ltr">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+
+		<title>CIS overview</title>
+
+		<style>
+		/* =============================================================================
+		Guide
+		- 0) Theme & color tokens (Light/Dark) — all colors defined here
+		- 1) Base & layout (workspace, stage, layer)
+		- 2) Hex grid (geometry, items, labels)
+		- 3) View modes (tracks/blocks) + legends
+		- 4) Controls (mode toggle, chips, checks, buttons)
+		- 5) Dock (portrait/landscape), tips (tour/toast), info drawer
+		- 6) Intro overlay, motion, and print/export
+		============================================================================= */
+
+		/* =========================================================================
+		0) THEME & COLOR TOKENS
+		- All colors centralized. No hex outside this block.
+		- Track fills preserved via .fill-bdm/.fill-cc/.fill-nmd/.fill-extra
+		========================================================================= */
+		:root {
+			/* Core neutrals */
+			--white: #ffffff;                            /* pure white */
+			--black: #000000;                            /* pure black */
+
+			/* Track palette */
+			--track-bdm: #008fc7;                        /* BDM blue */
+			--track-cc: #3c7a47;                         /* CC green */
+			--track-nmd: #ab833f;                        /* NMD gold */
+			--track-extra: #d22f2f;                      /* Extra cherry */
+
+			/* Light theme surfaces & text */
+			--app-bg: #c9c9c9;                           /* app canvas */
+			--surface: #ffffff;                          /* cards, panels */
+			--surface-2: #e3e3e3;                        /* stage panel */
+			--fill-base: #ffffff;                        /* hex base fill */
+			--title: #003366;                            /* headings/titles */
+			--text: #0d0e0e;                             /* body text */
+			--text-weak: rgba(13,14,14,.72);             /* subdued text */
+
+			/* Accent */
+			--accent: #003366;                           /* brand accent */
+			--accent-contrast: #ffffff;                  /* on-accent text */
+			--text-on-color: #ffffff;                    /* on solid color */
+
+			/* Glass, borders, lines */
+			--glass-bg: rgba(255,255,255,.92);           /* tour/toast bg */
+			--glass-border: rgba(0,0,0,.10);             /* tour/toast border */
+			--border-default: rgba(0,0,0,.12);           /* generic border */
+			--border-strong: rgba(0,0,0,.14);            /* stronger border */
+			--inset-line: rgba(0,0,0,.04);               /* inset hairline */
+
+			/* Special chips & buttons */
+			--chip-none-bg: #0b1524;                     /* “none” chip bg (light) */
+			--chip-none-fg: #ffffff;                     /* “none” chip text */
+
+			/* Shadows */
+			--shadow-1: 0 2px 12px rgba(0,0,0,.12);      /* card */
+			--shadow-2: 0 10px 24px rgba(0,0,0,.16);     /* heavy */
+			--shadow-btn: 0 6px 16px rgba(0,0,0,.12);    /* button */
+			--shadow-focus-filter: drop-shadow(0 16px 32px rgba(0,0,0,.22));
+			--shadow-print-1: 0 2.4mm 4.2mm rgba(0,0,0,.22);
+			--shadow-print-2: 0 .6mm 1.8mm rgba(0,0,0,.12);
+
+			/* Buttons/subtle UI */
+			--btn-subtle-bg: rgba(0,0,0,.08);            /* subtle icon btn bg */
+
+			/* Tints */
+			--tint-theme: rgba(0, 51, 102, .10);         /* theme tint */
+			--tint-course: rgba(0,0,0,.06);              /* course tint */
+
+			/* Mask/gradients */
+			--mask-opaque: #000000;                      /* mask solid color */
+
+			/* Geometry & app JS hooks */
+			--radius: 12px;
+			--gap: .75rem;
+			--scale: 1; --tx: 0px; --ty: 0px;
+
+			/* Dock sizing */
+			--dock-w: 340px;
+			--dock-h: 200px;
+			--dock-tab: 28px;
+
+			/* Workspace reserve (JS updates) */
+			--dock-reserve-bottom: calc(var(--dock-h) + 16px);
+			--dock-reserve-right:  calc(min(36vw, var(--dock-w)) + 16px);
+
+			/* Dock slide shift */
+			--dock-shift: 0%;
+		}
+
+		/* Dark theme */
+		body[data-ui-theme="dark"] {
+			--app-bg: #001933;
+			--surface: #0b1524;
+			--surface-2: #1c2637;
+			--fill-base: #0f1722;
+			--title: #ab833f;
+			--text: #ffffff;
+			--text-weak: rgba(255,255,255,.75);
+
+			--accent: #ab833f;
+			--accent-contrast: #001933;
+			--text-on-color: #ffffff;
+
+			--glass-bg: rgba(11,21,36,.86);
+			--glass-border: rgba(255,255,255,.12);
+			--border-default: rgba(255,255,255,.12);
+			--border-strong: rgba(255,255,255,.12);
+			--inset-line: rgba(255,255,255,.06);
+
+			--chip-none-bg: #5b421b;
+
+			--btn-subtle-bg: rgba(255,255,255,.08);
+
+			--tint-theme: rgba(171,131,63,.15);
+			--tint-course: rgba(255,255,255,.06);
+		}
+
+		/* Track fills (variable-driven) */
+		.fill-bdm { fill: var(--track-bdm); }
+		.fill-cc { fill: var(--track-cc); }
+		.fill-nmd { fill: var(--track-nmd); }
+		.fill-extra { fill: var(--track-extra); }
+		.fill-base { fill: var(--fill-base); }
+
+		/* =========================================================================
+		1) BASE & LAYOUT
+		========================================================================= */
+		*,*::before,*::after { box-sizing: border-box; }
+		html,body { height: 100%; margin: 0; }
+		body {
+			background: var(--app-bg);
+			color: var(--text);
+			font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+			-webkit-text-size-adjust: 100%;
+			text-rendering: optimizeLegibility;
+			overflow: hidden;
+			overscroll-behavior: none;
+		}
+
+		.app-title {
+			position: absolute; top: 12px; right: 16px; z-index: 10020;
+			color: var(--title); font-weight: 800; letter-spacing: .02em;
+			background: transparent; padding: .25rem .5rem; border-radius: 8px;
+			pointer-events: auto; cursor: pointer;
+		}
+		.app-title:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+		.workspace {
+			position: relative;
+			min-height: calc(100dvh - 1rem);
+			min-height: calc(100svh - 1rem);
+			min-height: calc(100vh  - 1rem);
+			margin: .5rem;
+			background: var(--surface);
+			border-radius: var(--radius);
+			box-shadow: var(--shadow-1);
+			display: flex; flex-direction: column;
+			padding: var(--gap);
+			transition: padding .28s ease;
+			will-change: padding;
+		}
+		@media (orientation: portrait) {
+			.workspace { padding-bottom: calc(var(--gap) + var(--dock-reserve-bottom)); }
+			body.dock-collapsed .workspace { padding-bottom: calc(var(--gap) + var(--dock-tab) + 10px); }
+		}
+		@media (orientation: landscape) {
+			.workspace { padding-right: calc(var(--gap) + var(--dock-reserve-right)); }
+			body.dock-collapsed .workspace { padding-right: calc(var(--gap) + var(--dock-tab) + 10px); }
+		}
+
+		.stage {
+			position: relative; flex: 1 1 auto; min-height: 0; overflow: hidden;
+			user-select: none; cursor: grab; border-radius: 12px;
+			background: var(--surface-2);
+			box-shadow: inset 0 1px 0 var(--inset-line);
+		}
+		.is-dragging .stage { cursor: grabbing; }
+
+		.btn--close-overview {
+			position: absolute; top: 12px; left: 12px; z-index: 10010;
+			background: var(--surface); color: var(--title);
+			border: 1px solid var(--border-default);
+			width: 34px; height: 34px; border-radius: 999rem;
+			display: inline-flex; align-items: center; justify-content: center;
+			text-decoration: none; box-shadow: var(--shadow-1);
+			font-size: 18px; line-height: 1;
+		}
+
+		.layer {
+			position: absolute; left: 50%; top: 50%;
+			transform: translate3d(-50%,-50%,0) scale(var(--scale)) translate3d(var(--tx), var(--ty), 0);
+			transform-origin: center; will-change: transform; touch-action: none;
+			transition: transform .28s cubic-bezier(.2,.8,.2,1);
+			backface-visibility: hidden;
+		}
+		body.is-moving .layer, .layer.is-measuring { transition: none !important; }
+
+		/* =========================================================================
+		2) HEX GRID
+		========================================================================= */
+		.hex-grid {
+			--flat: 320px; --halfH: 140px; --tri: calc(var(--halfH)*.606); --hex-space: 24px;
+			--w: calc(var(--flat) + var(--tri)*2);
+			--h: calc(var(--halfH)*2);
+			--col-gap: -105px;
+			--dx: calc(var(--w)*.75 + var(--col-gap));
+			--dy: calc(var(--h) + var(--hex-space));
+			position: relative;
+			width: calc(var(--w) + var(--dx)*6);
+			height: calc(var(--h) + var(--dy)*6);
+			contain: paint;
+			font-size: 200%;
+		}
+		@media (max-width: 900px) {
+			.hex-grid { --flat: 240px; --halfH: 100px; --hex-space: 19px; --col-gap: -85px; --w: calc(var(--flat) + var(--tri)*2); --h: calc(var(--halfH)*2); --dx: calc(var(--w)*.75 + var(--col-gap)); --dy: calc(var(--h) + var(--hex-space)); font-size: 160%; }
+		}
+		@media (max-width: 600px) {
+			.hex-grid { --flat: 200px; --halfH: 84px; --hex-space: 15px; --col-gap: -75px; --w: calc(var(--flat) + var(--tri)*2); --h: calc(var(--halfH)*2); --dx: calc(var(--w)*.75 + var(--col-gap)); --dy: calc(var(--h) + var(--hex-space)); font-size: 140%; }
+		}
+
+		.hex {
+			position: absolute; left: 50%; top: 50%;
+			width: var(--w); height: var(--h);
+			--oddY: 0px;
+			--hex-bg: var(--fill-base);
+			--dim-o: 0;
+			transform: translate(calc(-50% + var(--q)*var(--dx)), calc(-50% + (var(--r) + (var(--q)*.5))*var(--dy) + var(--oddY)));
+			display: grid; place-items: center;
+			pointer-events: none; user-select: none;
+			transition: opacity .16s ease, filter .2s ease;
+		}
+		.hex.hex--odd { --oddY: calc(var(--halfH) + (var(--hex-space)/2)); }
+
+		.hex::before,
+		.hex::after {
+			content: ""; position: absolute; top: 0; bottom: 0; left: 50%;
+			transform: translateX(-50%); height: 100%; width: auto;
+			aspect-ratio: 114.68 / 99.31;
+			clip-path: polygon(25% 0,75% 0,100% 50%,75% 100%,25% 100%,0 50%);
+		}
+		.hex::before { background: var(--hex-bg); }
+		.hex::after { background: var(--hex-dim-fill, var(--fill-base)); opacity: var(--dim-o); transition: opacity .22s ease; z-index: 1; }
+
+		.hex__svg { position: absolute; inset: 0; width: 100%; height: 100%; display: block; z-index: 0; pointer-events: none; }
+		.hex__label {
+			position: relative; z-index: 2;
+			max-width: calc(var(--flat) - 1.25rem);
+			padding: .9em 2.4em; text-align: center; line-height: 1.12;
+			font-weight: 700; font-size: .72em; color: var(--title);
+			pointer-events: none; user-select: none;
+		}
+
+		.hex__hit {
+			position: absolute; top: 0; bottom: 0; left: 50%;
+			transform: translateX(-50%); height: 100%; width: auto;
+			aspect-ratio: 114.68 / 99.31; z-index: 3; pointer-events: auto;
+			background: transparent; cursor: grab; --hit-inset: 0%;
+			clip-path: polygon(calc(25% + var(--hit-inset)) 0%, calc(75% - var(--hit-inset)) 0%, 100% 50%, calc(75% - var(--hit-inset)) 100%, calc(25% + var(--hit-inset)) 100%, 0% 50%);
+			font-size: 0; line-height: 0;
+		}
+		.is-dragging .hex__hit { cursor: grabbing; }
+
+		/* Dim & focus */
+		.hex--hidden { display: none !important; }
+		.hex--dim .hex__hit { pointer-events: none; }
+		.hex--dim .hex__label { opacity: 0; visibility: hidden; }
+		.hex--dim::before { background: var(--hex-dim-fill, var(--fill-base)); }
+		.hex--dim { opacity: .26; --dim-o: 1; }
+		body[data-ui-theme="dark"] .hex--dim { opacity: .14; }
+		.hex--subdue { opacity: .45; }
+		.hex--focus { filter: var(--shadow-focus-filter); z-index: 5; opacity: 1; }
+		.hex--focus::before { box-shadow: 0 0 0 3px var(--title) inset; }
+
+		/* =========================================================================
+		3) VIEW MODES & LEGENDS
+		========================================================================= */
+		/* Blocks mode */
+		body[data-view-mode="blocks"] .hex__svg { display: none !important; visibility: hidden !important; opacity: 0 !important; }
+		body[data-view-mode="blocks"] .hex { background: transparent !important; }
+		body[data-view-mode="blocks"] .hex::before { box-shadow: none !important; }
+		body[data-view-mode="blocks"] .hex[data-block="1"]::before { background: var(--track-bdm); }
+		body[data-view-mode="blocks"] .hex[data-block="2"]::before { background: var(--track-cc); }
+		body[data-view-mode="blocks"] .hex[data-block="3"]::before { background: var(--track-nmd); }
+		body[data-view-mode="blocks"] .hex[data-block="4"]::before { background: var(--track-extra); }
+		body[data-view-mode="blocks"] .hex[data-block=""],
+		body[data-view-mode="blocks"] .hex[data-block="-"] { --hex-bg: var(--fill-base); }
+
+		body[data-ui-theme="light"][data-view-mode="blocks"] .hex .hex__label { color: var(--text-on-color); }
+		body[data-view-mode="blocks"] .hex[data-block=""] .hex__label,
+		body[data-view-mode="blocks"] .hex[data-block="-"] .hex__label { color: var(--accent) !important; }
+		body[data-ui-theme="dark"][data-view-mode="blocks"] .hex[data-block]:not([data-block=""]):not([data-block="-"]) .hex__label { color: var(--text-on-color) !important; }
+
+		#legendTracks, #legendBlocks { display: none; }
+		body[data-view-mode="tracks"] #legendTracks { display: block; }
+		body[data-view-mode="blocks"] #legendBlocks { display: block; }
+
+		/* Label color rule: single-track uses accent-contrast */
+		.hex[data-track]:not([data-track*=" "]) .hex__label { color: var(--accent-contrast); }
+		body[data-ui-theme="dark"] .hex[data-track*=" "] .hex__label { color: var(--text-on-color); }
+
+		/* Dim overlay fill mapping */
+		body[data-view-mode="tracks"] .hex[data-track="BDM"] { --hex-dim-fill: var(--track-bdm); }
+		body[data-view-mode="tracks"] .hex[data-track="CC"] { --hex-dim-fill: var(--track-cc); }
+		body[data-view-mode="tracks"] .hex[data-track="NMD"] { --hex-dim-fill: var(--track-nmd); }
+		body[data-view-mode="blocks"] .hex[data-block="1"] { --hex-dim-fill: var(--track-bdm); }
+		body[data-view-mode="blocks"] .hex[data-block="2"] { --hex-dim-fill: var(--track-cc); }
+		body[data-view-mode="blocks"] .hex[data-block="3"] { --hex-dim-fill: var(--track-nmd); }
+		body[data-view-mode="blocks"] .hex[data-block="4"] { --hex-dim-fill: var(--track-extra); }
+		body[data-view-mode="blocks"] .hex[data-block=""],
+		body[data-view-mode="blocks"] .hex[data-block="-"] { --hex-dim-fill: var(--fill-base); }
+
+		body.is-moving .hex,
+		body.is-moving .hex--focus { filter: none !important; }
+
+		/* Legends */
+		.title { margin: 0; font-size: 1.05rem; color: var(--title); font-weight: 800; letter-spacing: .01em; }
+		.legend-box {
+			border: 1px solid var(--border-strong);
+			border-radius: 12px;
+			background: var(--surface);
+			padding: .4rem .5rem;
+			display: grid; gap: .4rem;
+		}
+		.legend-title { font-weight: 800; color: var(--title); font-size: .82rem; margin: 0 0 .4rem 0; }
+		.legend-tracks {
+			display: grid; grid-auto-flow: column; grid-auto-columns: min-content;
+			column-gap: .4rem; row-gap: .4rem; align-items: center;
+		}
+		.legend-item { display: inline-flex; align-items: center; gap: .28rem; font-size: .82rem; color: var(--text); position: relative; }
+		.legend-item .info-btn {
+			border: 0; background: none; padding: 0; margin-left: -.22rem; cursor: pointer;
+			color: var(--title); font: inherit; line-height: 1; opacity: .9;
+		}
+		.legend-item .info-btn .icon-info {
+			display: inline-grid; place-items: center;
+			width: 1.05em; height: 1.05em; border: 1.5px solid currentColor; border-radius: 999rem;
+			font-size: .75em; font-weight: 700; line-height: 1; text-transform: none;
+		}
+		.legend-item .info-btn:focus-visible { outline: 2px solid var(--accent); border-radius: .25rem; }
+
+		.track-tip {
+			position: fixed; left: 0; top: 0;
+			background: var(--surface); color: var(--text);
+			border: 1px solid var(--border-strong);
+			border-radius: .35rem; padding: .35rem .55rem; display: none; z-index: 10050;
+			box-shadow: var(--shadow-1);
+			width: max-content; max-width: clamp(14rem, 60vw, 30rem);
+			white-space: normal; overflow-wrap: break-word; word-break: normal; hyphens: auto; pointer-events: none;
+		}
+		.track-tip.is-open { display: block; }
+		#trackInfoBtn { display: none !important; }
+
+		.legend-item .sq { width: 10px; height: 10px; border-radius: .18rem; display: inline-block; }
+		.legend-item .bdm { background: var(--track-bdm); }
+		.legend-item .cc { background: var(--track-cc); }
+		.legend-item .nmd { background: var(--track-nmd); }
+		.legend-item .extra { background: var(--track-extra); }
+		.legend-item .abbr { font-weight: 800; letter-spacing: .02em; color: var(--title); }
+		.legend-theme { font-size: .82rem; color: var(--text-weak); }
+
+		.legend-grid { display: grid; gap: .75rem; grid-template-columns: 1fr; }
+		@media (orientation: landscape) { .legend-grid { grid-template-columns: 1fr; } }
+
+		.legend-info { background: none; border: 0; padding: 0 .15rem; cursor: pointer; color: var(--title); }
+		.legend-info sup { line-height: 1; }
+		.legend-names { display: none; font-size: .92rem; color: var(--text-weak); }
+		.legend-names.is-open { display: grid; gap: .25rem; }
+
+		/* =========================================================================
+		4) CONTROLS
+		========================================================================= */
+		/* Mode toggle (segmented) */
+		.mode-toggle { display: flex; justify-content: flex-start; }
+		.segmented {
+			display: inline-flex; gap: 0; border: 1px solid var(--border-strong);
+			border-radius: 12px; overflow: hidden; background: var(--surface); padding: 6px !important;
+		}
+		.segmented label { margin: 0; position: relative; }
+		.segmented input { position: absolute; inset: 0; opacity: 0; pointer-events: none; }
+		.segmented span { display: inline-block; padding: .35rem .75rem; cursor: pointer; font-size: .9rem; color: var(--text); }
+		.segmented input:checked + span { background: var(--accent); color: var(--accent-contrast); border-radius: 6px; }
+
+		/* Collapsibles */
+		details.collapsible { border: 0; padding: 0; }
+		details.collapsible.pill { border: 1px solid var(--title); border-radius: 14px; background: transparent; }
+		details.collapsible.pill > summary {
+			list-style: none; cursor: pointer; user-select: none;
+			display: flex; align-items: center; justify-content: space-between; gap: .5rem;
+			width: 100%; padding: .65rem .9rem; border-radius: 14px; font-weight: 800; color: var(--title);
+			background: var(--tint-course);
+		}
+		.toggle-stack { display: grid; gap: var(--gap); }
+		details.collapsible.pill[open] { background: var(--surface); border-color: var(--title); }
+		details.collapsible.pill[open] > summary { background: transparent; border-radius: 14px 14px 0 0; }
+		details.collapsible.pill .collapsible__body {
+			padding: .7rem .8rem .9rem; border-top: 1px solid var(--title);
+			border-bottom-left-radius: 14px; border-bottom-right-radius: 14px; background: var(--surface);
+		}
+
+		/* Theme radio chips */
+		.chip { display: block; position: relative; }
+		.chip input { position: absolute; opacity: 0; inset: 0; pointer-events: none; }
+		.chip span {
+			display: flex; align-items: center; gap: .45rem; width: 100%;
+			background: var(--surface); color: var(--text);
+			padding: .38rem .55rem; border-radius: .6rem; border: 1px solid var(--border-default); font-size: .85rem;
+		}
+		.chip span::before {
+			content: ""; flex: 0 0 12px; width: 12px; height: 12px; border-radius: 50%; border: 2px solid currentColor;
+		}
+		.chip input:checked + span { background: var(--accent); color: var(--accent-contrast); border-color: transparent; }
+		.chip input:checked + span::before { border-color: var(--accent-contrast); background: radial-gradient(var(--accent-contrast) 0 48%, transparent 49% 100%); }
+		.chip--none input:checked + span { background: var(--chip-none-bg); color: var(--chip-none-fg); }
+
+		/* Course checkboxes */
+		.check { display: block; position: relative; }
+		.check input { position: absolute; opacity: 0; inset: 0; pointer-events: none; }
+		.check span {
+			display: flex; align-items: center; gap: .45rem; background: var(--surface); color: var(--text);
+			padding: .38rem .55rem .38rem 1.65rem;
+			border-radius: .55rem; border: 1px solid var(--border-default); font-size: .84rem;
+		}
+		.check span::before {
+			content: ""; position: absolute; left: .55rem; top: 50%; transform: translateY(-50%);
+			width: 13px; height: 13px; border-radius: .25rem; border: 2px solid currentColor;
+		}
+		.check span::after {
+			content: ""; position: absolute; left: .82rem; top: 50%; width: 8px; height: 5px;
+			border: 2px solid transparent; border-top: 0; border-right: 0; transform: translateY(-55%) rotate(-45deg);
+		}
+		.check input:checked + span { color: var(--accent); border-color: var(--accent); }
+		.check input:checked + span::before { background: currentColor; border-color: currentColor; }
+		.check input:checked + span::after { border-color: var(--text-on-color); }
+		.check input:focus-visible + span { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+		.group--themes, .group--courses { display: grid; grid-auto-rows: min-content; row-gap: .45rem; overflow: auto; }
+		.group--themes { max-height: 8rem; }
+		.group--courses { max-height: 12rem; }
+
+		/* Buttons */
+		.btn {
+			display: inline-flex; align-items: center; justify-content: center;
+			padding: .55rem .85rem; border-radius: 999rem; text-decoration: none; user-select: none; border: 0;
+			box-shadow: var(--shadow-btn); background: var(--border-default); color: var(--title);
+		}
+		.btn--ghost { background: transparent; box-shadow: none; border: 1px solid var(--border-strong); }
+		.btn--download { background: var(--accent); color: var(--accent-contrast); }
+		.bulk-actions { display: flex; align-items: center; justify-content: flex-end; gap: .5rem; margin-bottom: .35rem; }
+		.btn--sm { padding: .4rem .65rem; font-size: .88rem; border-radius: .55rem; }
+		#coursesAllBtn { background: var(--accent) !important; color: var(--accent-contrast) !important; border-color: transparent !important; }
+		#coursesNoneBtn { background: var(--chip-none-bg) !important; color: var(--chip-none-fg) !important; border-color: transparent !important; }
+
+		/* =========================================================================
+		5) DOCK, TIPS, INFO
+		========================================================================= */
+		/* Dock */
+		.dock {
+			position: fixed; z-index: 10000;
+			background: var(--surface-2);
+			border: 1px solid var(--border-default);
+			border-radius: 14px; box-shadow: var(--shadow-2);
+			overflow: hidden; transition: transform .26s ease, opacity .26s ease; display: flex;
+		}
+		body.dock-collapsed { --dock-shift: calc(100% - var(--dock-tab)); }
+
+		@media (orientation: portrait) {
+			.dock {
+				left: max(12px, env(safe-area-inset-left));
+				right: max(12px, env(safe-area-inset-right));
+				bottom: max(12px, env(safe-area-inset-bottom));
+				max-height: min(60dvh, 60vh);
+				flex-direction: column;
+				transform: translateY(var(--dock-shift));
+			}
+		}
+		@media (orientation: landscape) {
+			.dock {
+				right: max(12px, env(safe-area-inset-right));
+				top: 50%;
+				width: min(34vw, var(--dock-w));
+				max-height: 86vh;
+				flex-direction: row;
+				transform: translateY(-50%) translateX(var(--dock-shift));
+			}
+		}
+
+		.dock__handle {
+			background: var(--accent);
+			display: grid; place-items: center;
+			user-select: none; touch-action: none;
+			flex: 0 0 var(--dock-tab);
+		}
+		.dock__toggle {
+			width: 24px; height: 24px; border-radius: 999rem; border: 0; cursor: pointer;
+			background: var(--accent); color: var(--accent-contrast);
+			box-shadow: var(--shadow-btn);
+			display: inline-flex; align-items: center; justify-content: center;
+			font-size: 14px; line-height: 1; -webkit-tap-highlight-color: transparent;
+		}
+
+		.dock__content {
+			padding: .9rem; display: grid; gap: .9rem;
+			overflow-y: auto; overflow-x: hidden; -webkit-overflow-scrolling: touch;
+			grid-auto-rows: min-content; flex: 1 1 auto; min-height: 0; min-width: 0;
+		}
+		.dock__row { display: flex; align-items: center; gap: .75rem; }
+		.dock__row--spread { justify-content: space-between; }
+		.dock__row--actions { justify-content: flex-end; gap: .5rem; }
+
+		/* Tips: tour & toast */
+		.tour, .toast {
+			position: fixed;
+			background: var(--glass-bg);
+			border: 1px solid var(--glass-border);
+			box-shadow: var(--shadow-2);
+			border-radius: 16px;
+			backdrop-filter: blur(6px);
+			color: var(--text);
+			display: none; z-index: 10030;
+		}
+		.tour { padding: 1rem 1.1rem; }
+		.tour.is-open { display: block; }
+		.tour__top { display: flex; align-items: center; justify-content: space-between; gap: .75rem; }
+		.tour__step { font-weight: 700; font-size: .95rem; opacity: .85; }
+		.tour__body { margin-top: .25rem; }
+		.tour__actions { display: flex; justify-content: flex-end; gap: .5rem; margin-top: .7rem; flex-wrap: wrap; }
+
+		@media (orientation: portrait) {
+			.tour { left: 50%; transform: translateX(-50%); bottom: calc(var(--dock-reserve-bottom) + 12px); width: min(560px, calc(100vw - 24px)); }
+		}
+		@media (orientation: landscape) {
+			.tour { left: 16px; top: 60px; transform: none; width: min(440px, calc(100vw - var(--dock-reserve-right) - 32px)); }
+		}
+
+		.toast { padding: .55rem .75rem; border-radius: 12px; left: 50%; transform: translateX(-50%); }
+		.toast.is-open { display: block; }
+		@media (orientation: portrait) { .toast { bottom: calc(var(--dock-reserve-bottom) + 12px); } }
+		@media (orientation: landscape) { .toast { bottom: 16px; } }
+
+		/* Center CTA */
+		.btn--center {
+			position: fixed; top: 12px; left: 50%; transform: translateX(-50%);
+			background: var(--accent); color: var(--accent-contrast); border: 0;
+			opacity: 0; pointer-events: none; z-index: 10010;
+		}
+		.btn--center.is-visible { opacity: 1; pointer-events: auto; }
+
+		/* Info drawer */
+		.info {
+			position: fixed; left: 12px; right: 12px; bottom: 0;
+			height: 33.333vh; background: var(--surface);
+			border-top-left-radius: 12px; border-top-right-radius: 12px;
+			box-shadow: 0 -6px 16px var(--border-default);
+			transform: translateY(120%); transition: transform .22s ease; z-index: 9996;
+			padding: 1rem 1rem 1rem calc(1rem + 40px); display: grid; align-content: start; overflow: auto;
+		}
+		.info.is-open { transform: translateY(0); }
+		.info p { margin: 0; }
+		@media (orientation: landscape) { .info { height: 28vh; } }
+		@media (orientation: portrait) {
+			.info { bottom: var(--dock-reserve-bottom); }
+			body.dock-collapsed .info { bottom: calc(var(--dock-tab) + 12px); }
+		}
+		.info__close {
+			position: absolute; top: 8px; left: 8px; width: 32px; height: 32px; border-radius: 999rem; border: 0;
+			background: var(--btn-subtle-bg); color: var(--title); box-shadow: var(--shadow-btn); cursor: pointer;
+		}
+
+		/* =========================================================================
+		6) INTRO, MOTION, PRINT/EXPORT
+		========================================================================= */
+		.cis-intro {
+			position: fixed; inset: 0; z-index: 20000; pointer-events: none;
+			background: radial-gradient(circle at 50% 50%, transparent var(--reveal, 0vmax), var(--accent) calc(var(--reveal, 0vmax) + 1px));
+		}
+		.cis-intro.cis-intro--mask {
+			background: var(--accent);
+			-webkit-mask-image: radial-gradient(circle at 50% 50%, transparent var(--reveal, 0vmax), var(--mask-opaque) calc(var(--reveal, 0vmax) + 1px));
+			mask-image: radial-gradient(circle at 50% 50%, transparent var(--reveal, 0vmax), var(--mask-opaque) calc(var(--reveal, 0vmax) + 1px));
+			-webkit-mask-position: 50% 50%; mask-position: 50% 50%;
+			-webkit-mask-repeat: no-repeat; mask-repeat: no-repeat;
+			-webkit-mask-size: 100% 100%; mask-size: 100% 100%;
+		}
+		.cis-intro.cis-intro--fade { background: var(--accent); animation: cis-fade 700ms ease-in forwards; }
+		@keyframes cis-fade { to { opacity: 0; } }
+
+		@media print {
+			@page { size: A4 landscape; margin: 0; }
+			html, body { width: 297mm; height: 210mm; }
+			body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+			.stage { position: absolute; inset: 0; }
+			.layer { transform: translate(-50%, -50%) scale(1) translate(0px, 0px) !important; }
+			.hex { filter: drop-shadow(var(--shadow-print-1)) drop-shadow(var(--shadow-print-2)) !important; }
+			.dock,.tour,.toast,.btn--center,.btn--close-overview,.info { display: none !important; }
+		}
+
+		@media (prefers-reduced-motion: reduce) {
+			.layer, .dock, .info { transition: none !important; }
+			.cis-intro { display: none; }
+		}
+	</style>
+
+
+	</head>
+
+	<body data-ui-theme="light" data-view-mode="tracks">
+		<!-- =========================================================
+			APP SHELL: intro mask
+			========================================================= -->
+		<div class="cis-intro" id="intro" aria-hidden="true"></div>
+
+		<!-- =========================================================
+			SVG SPRITES (icons for hex tiles) — keep IDs unchanged
+			========================================================= -->
+		<svg width="0" height="0" style="position:absolute;width:0;height:0;overflow:hidden" aria-hidden="true" focusable="false">
+			<!-- CC -->
+			<symbol id="hex-cc" viewBox="0 0 114.68 99.31">
+				<g>
+					<polygon class="fill-cc" points="86.01 0 28.67 0 0 49.66 28.67 99.31 86.01 99.31 114.68 49.66 86.01 0"/>
+					<path class="fill-base" d="M107.35,45.94l-10.82-18.75-10.59-18.35c-1.55,2.65-3.09,5.31-4.64,7.96l8.29,14.37,8.53,14.77,2.15,3.72-2.14,3.71-8.53,14.77-8.29,14.35-2.51,4.35h-42.93l-2.51-4.35-8.29-14.35-8.53-14.77-2.14-3.71,2.15-3.72,8.53-14.77,8.29-14.36,2.5-4.33h38.33c1.55-2.67,3.11-5.33,4.66-8H31.25l-2.52,4.37-10.59,18.34-10.82,18.75-2.15,3.72,2.14,3.71,10.82,18.75,10.58,18.33,2.54,4.39h52.17l2.54-4.39,10.58-18.33,10.82-18.75,2.14-3.71-2.15-3.72ZM70.98,6.45c.63,0,1.02.16,1.5.47l-.49.94c-.34-.29-.49-.36-.97-.36-.58,0-1.03.51-1.03,1.17s.46,1.24,1.16,1.24c.36,0,.58-.02.95-.22l.29.96c-.44.2-.74.31-1.42.31-1.85,0-2.41-1.27-2.41-2.28s.59-2.24,2.41-2.24ZM66.93,6.45c.63,0,1.02.16,1.5.47l-.49.94c-.34-.29-.49-.36-.97-.36-.58,0-1.03.51-1.03,1.17s.46,1.24,1.16,1.24c.36,0,.58-.02.95-.22l.29.96c-.44.2-.74.31-1.42.31-1.85,0-2.4-1.27-2.4-2.28s.59-2.24,2.4-2.24Z"/>
+				</g>
+			</symbol>
+
+			<!-- BDM -->
+			<symbol id="hex-bdm" viewBox="0 0 114.68 99.31">
+				<g>
+					<polygon class="fill-bdm" points="86.01 0 28.67 0 0 49.66 28.67 99.31 86.01 99.31 114.68 49.66 86.01 0"/>
+					<g>
+						<path class="fill-base" d="M16.03,59.29c.24-.14.27-.38.17-.56l-.14-.24-.74.43.11.2c.13.23.35.32.6.17Z"/>
+						<path class="fill-base" d="M18.29,62.49l-.19-.34-2.03,1.17.19.34c.35.61.83.75,1.57.32.74-.43.79-.92.46-1.49Z"/>
+						<path class="fill-base" d="M14.86,59.5l-.14-.24-.81.46.14.24c.14.24.39.39.66.23.27-.16.31-.42.15-.69Z"/>
+						<path class="fill-base" d="M107.36,45.94l-10.82-18.75-10.6-18.34-2.52-4.37H31.25l-2.52,4.36-10.59,18.35-10.82,18.75h9.23l8.53-14.77,8.29-14.37,2.5-4.32h42.93l2.5,4.33,8.29,14.36,8.53,14.77,2.15,3.72-2.14,3.71-8.53,14.77-8.29,14.35-2.51,4.35h-42.93l-2.51-4.35-8.29-14.35-8.53-14.77H7.31l10.82,18.75,10.58,18.33,2.54,4.39h52.17l2.54-4.39,10.58-18.33,10.83-18.75,2.14-3.71-2.15-3.72ZM13.44,60.73l-1-1.74,3.72-2.15.94,1.63c.37.64.62,1.49-.18,1.96-.44.25-.87.13-1.11-.12.08.38,0,.89-.51,1.19-.62.36-1.31.16-1.85-.77ZM15.46,64.22l-.92-1.6,3.72-2.15.93,1.61c.67,1.15.64,2.39-.65,3.13-1.28.74-2.4.17-3.06-.99ZM19.49,71.2l-.62-1.07,2.03-1.17-2.5.36-.34-.6,1.56-1.92-2,1.15-.61-1.06,3.72-2.14.72,1.26-1.58,2.09,2.62-.28.72,1.25-3.72,2.15Z"/>
+					</g>
+				</g>
+			</symbol>
+
+			<!-- NMD -->
+			<symbol id="hex-nmd" viewBox="0 0 114.68 99.31">
+				<g>
+					<polygon class="fill-nmd" points="86.01 0 28.67 0 0 49.66 28.67 99.31 86.01 99.31 114.68 49.66 86.01 0"/>
+					<g>
+						<path class="fill-base" d="M93.26,70.32c-.74-.43-1.19-.23-1.52.35l-.19.34,2.03,1.17.2-.34c.35-.61.24-1.09-.5-1.52Z"/>
+						<path class="fill-base" d="M107.36,45.94l-10.82-18.75-10.6-18.34-2.52-4.37H31.26l-2.52,4.37-10.6,18.34-10.82,18.75-2.15,3.72,2.14,3.71,10.83,18.75,10.58,18.33,2.54,4.39h47.65c-1.56-2.67-3.12-5.33-4.67-8h-38.37l-2.51-4.34-8.28-14.36-8.53-14.77-2.14-3.71,2.15-3.72,8.52-14.77,8.29-14.37,2.5-4.32h42.93l2.5,4.33,8.29,14.36,8.53,14.77,2.15,3.72-2.14,3.71-8.53,14.77-8.29,14.35c1.56,2.65,3.1,5.31,4.65,7.96l10.58-18.33,10.83-18.75,2.14-3.71-2.15-3.72ZM89.63,81.03l-3.02.2,2.14,1.24-.61,1.06-3.71-2.15.69-1.19,2.89-.18-2.09-1.21.61-1.06,3.75,2.16-.65,1.12ZM92.59,75.83l-2.03-1.17,1.56,1.99-.34.6-2.44-.39,2,1.15-.61,1.06-3.71-2.15.72-1.26,2.6.32-1.55-2.13.72-1.25,3.72,2.15-.62,1.07ZM94.65,72.26l-.92,1.6-3.71-2.15.93-1.6c.67-1.15,1.75-1.74,3.04-1,1.28.74,1.34,1.99.67,3.15Z"/>
+					</g>
+				</g>
+			</symbol>
+
+			<!-- CC + BDM -->
+			<symbol id="hex-cc-bdm" viewBox="0 0 114.68 99.31">
+				<g>
+					<polygon class="fill-base" points="86.01 0 28.67 0 0 49.66 28.67 99.31 86.01 99.31 114.68 49.66 86.01 0"/>
+					<g>
+						<g>
+							<path class="fill-bdm" d="M31.25,4.48l-2.52,4.36-10.59,18.36-10.83,18.75-2.14,3.71,2.14,3.71,10.83,18.75,10.58,18.33c1.55-2.65,3.09-5.31,4.64-7.96l-8.28-14.34-8.54-14.78-2.14-3.71,2.14-3.71,8.54-14.78,8.29-14.37,2.5-4.32h38.33c1.56-2.67,3.11-5.33,4.67-8H31.25ZM59.67,10.84h-2.01v-4.29h1.88c.74,0,1.61.21,1.61,1.13,0,.51-.33.82-.66.9.37.12.77.44.77,1.04,0,.72-.51,1.22-1.59,1.22ZM63.7,10.84h-1.85v-4.29h1.85c1.33,0,2.39.64,2.39,2.13s-1.05,2.16-2.39,2.16ZM71.77,10.84h-1.23v-2.35l-.94,2.35h-.69l-.88-2.31v2.31h-1.23v-4.29h1.45l1.02,2.41,1.07-2.41h1.44v4.29Z"/>
+							<path class="fill-bdm" d="M59.71,7.88c0-.28-.2-.42-.4-.42h-.27v.86h.23c.27,0,.45-.14.45-.44Z"/>
+							<path class="fill-bdm" d="M63.62,7.53h-.39v2.34h.39c.71,0,1.07-.34,1.07-1.2s-.4-1.14-1.07-1.14Z"/>
+							<path class="fill-bdm" d="M59.31,9h-.27v.93h.27c.27,0,.53-.14.53-.46s-.21-.47-.53-.47Z"/>
+						</g>
+						<path class="fill-cc" d="M107.37,45.95l-10.83-18.76-10.6-18.34c-1.54,2.66-3.09,5.31-4.64,7.96l8.29,14.36,8.54,14.78,2.14,3.71-2.14,3.71-8.54,14.78-8.28,14.34-2.51,4.35h-38.36c-1.56,2.67-3.11,5.34-4.67,8h47.65l2.53-4.39,10.59-18.32,10.83-18.76,2.14-3.71-2.14-3.71ZM44.72,92.27c.36,0,.58-.02.95-.22l.29.96c-.44.2-.74.31-1.42.31-1.85,0-2.4-1.27-2.4-2.28s.59-2.24,2.4-2.24c.63,0,1.02.16,1.5.47l-.49.94c-.34-.29-.49-.36-.97-.36-.58,0-1.03.51-1.03,1.17s.46,1.24,1.16,1.24ZM48.76,92.27c.36,0,.58-.02.95-.22l.29.96c-.44.2-.74.31-1.42.31-1.85,0-2.4-1.27-2.4-2.28s.59-2.24,2.4-2.24c.63,0,1.02.16,1.5.47l-.49.94c-.34-.29-.49-.36-.97-.36-.58,0-1.03.51-1.03,1.17s.46,1.24,1.16,1.24Z"/>
+					</g>
+					</g>
+			</symbol>
+
+			<!-- CC + NMD -->
+			<symbol id="hex-cc-nmd" viewBox="0 0 114.68 99.31">
+				<g>
+					<polygon class="fill-base" points="86.01 0 28.67 0 0 49.66 28.67 99.31 86.01 99.31 114.68 49.66 86.01 0"/>
+					<g>
+						<path class="fill-cc" d="M31.25,4.48l-2.52,4.36-10.59,18.36-10.83,18.75-2.14,3.71,2.14,3.71,10.83,18.75,10.58,18.33c1.55-2.65,3.09-5.31,4.64-7.96l-8.28-14.34-8.54-14.78-2.14-3.71,2.14-3.71,8.54-14.78,8.29-14.37,2.5-4.32h38.33c1.56-2.67,3.11-5.33,4.67-8H31.25ZM66.96,9.91c.36,0,.58-.02.95-.22l.29.96c-.44.2-.74.31-1.42.31-1.85,0-2.4-1.27-2.4-2.28s.59-2.24,2.4-2.24c.63,0,1.02.16,1.5.47l-.49.94c-.34-.29-.49-.36-.97-.36-.58,0-1.03.51-1.03,1.17s.46,1.24,1.16,1.24ZM71,9.91c.36,0,.58-.02.95-.22l.29.96c-.44.2-.74.31-1.42.31-1.85,0-2.4-1.27-2.4-2.28s.59-2.24,2.4-2.24c.63,0,1.02.16,1.5.47l-.49.94c-.34-.29-.49-.36-.97-.36-.58,0-1.03.51-1.03,1.17s.46,1.24,1.16,1.24Z"/>
+					<g>
+						<path class="fill-nmd" d="M107.37,45.95l-10.83-18.76-10.6-18.34c-1.54,2.66-3.09,5.31-4.64,7.96l8.29,14.36,8.54,14.78,2.14,3.71-2.14,3.71-8.54,14.78-8.28,14.34-2.51,4.35h-38.36c-1.56,2.67-3.11,5.34-4.67,8h47.65l2.53-4.39,10.59-18.32,10.83-18.76,2.14-3.71-2.14-3.71ZM46.76,93.24h-1.29l-1.68-2.52v2.48h-1.22v-4.29h1.38l1.6,2.42v-2.42h1.22v4.33ZM52.68,93.21h-1.23v-2.35l-.94,2.35h-.69l-.88-2.31v2.31h-1.23v-4.29h1.45l1.02,2.41,1.07-2.41h1.44v4.29ZM55.57,93.21h-1.85v-4.29h1.85c1.33,0,2.39.64,2.39,2.13s-1.05,2.16-2.39,2.16Z"/>
+						<path class="fill-nmd" d="M55.49,89.89h-.39v2.34h.39c.71,0,1.07-.34,1.07-1.2s-.4-1.14-1.07-1.14Z"/>
+					</g>
+					</g>
+				</g>
+			</symbol>
+
+			<!-- BDM + NMD -->
+			<symbol id="hex-bdm-nmd" viewBox="0 0 114.68 99.31">
+				<g>
+					<polygon class="fill-base" points="86.01 0 28.67 0 0 49.66 28.67 99.31 86.01 99.31 114.68 49.66 86.01 0"/>
+					<g>
+						<g>
+							<path class="fill-bdm" d="M63.62,7.53h-.39v2.34h.39c.71,0,1.07-.34,1.07-1.2s-.4-1.14-1.07-1.14Z"/>
+							<path class="fill-bdm" d="M59.31,9h-.27v.93h.27c.27,0,.53-.14.53-.46s-.21-.47-.53-.47Z"/>
+							<path class="fill-bdm" d="M59.71,7.88c0-.28-.2-.42-.4-.42h-.27v.86h.23c.27,0,.45-.14.45-.44Z"/>
+							<path class="fill-bdm" d="M31.25,4.48l-2.52,4.36-10.59,18.36-10.83,18.75-2.14,3.71,2.14,3.71,10.83,18.75,10.58,18.33c1.55-2.65,3.09-5.31,4.64-7.96l-8.28-14.34-8.54-14.78-2.14-3.71,2.14-3.71,8.54-14.78,8.29-14.37,2.5-4.32h38.33c1.56-2.67,3.11-5.33,4.67-8H31.25ZM59.67,10.84h-2.01v-4.29h1.88c.73,0,1.61.21,1.61,1.13,0,.51-.33.82-.66.9.37.12.77.44.77,1.04,0,.72-.51,1.22-1.59,1.22ZM63.7,10.84h-1.85v-4.29h1.85c1.33,0,2.39.64,2.39,2.13s-1.05,2.16-2.39,2.16ZM71.77,10.84h-1.23v-2.35l-.94,2.35h-.69l-.88-2.31v2.31h-1.23v-4.29h1.45l1.02,2.41,1.07-2.41h1.44v4.29Z"/>
+						</g>
+						<g>
+							<path class="fill-nmd" d="M55.49,89.89h-.39v2.34h.39c.71,0,1.07-.34,1.07-1.2s-.4-1.14-1.07-1.14Z"/>
+							<path class="fill-nmd" d="M107.37,45.95l-10.83-18.76-10.6-18.34c-1.54,2.66-3.09,5.31-4.64,7.96l8.29,14.36,8.54,14.78,2.14,3.71-2.14,3.71-8.54,14.78-8.28,14.34-2.51,4.35h-38.36c-1.56,2.67-3.11,5.34-4.67,8h47.65l2.53-4.39,10.59-18.32,10.83-18.76,2.14-3.71-2.14-3.71ZM46.76,93.24h-1.29l-1.68-2.52v2.48h-1.22v-4.29h1.38l1.6,2.42v-2.42h1.22v4.33ZM52.68,93.21h-1.23v-2.35l-.94,2.35h-.69l-.88-2.31v2.31h-1.23v-4.29h1.45l1.02,2.41,1.07-2.41h1.44v4.29ZM55.57,93.21h-1.85v-4.29h1.85c1.33,0,2.39.64,2.39,2.13s-1.05,2.16-2.39,2.16Z"/>
+						</g>
+					</g>
+				</g>
+			</symbol>
+
+			<!-- BDM + CC + NMD -->
+			<symbol id="hex-all" viewBox="0 0 114.68 99.31">
+				<g>
+					<polygon class="fill-base" points="86.01 0 28.67 0 0 49.66 28.67 99.31 86.01 99.31 114.68 49.66 86.01 0"/>
+					<g>
+						<g>
+							<path class="fill-nmd" d="M93.21,70.31c-.74-.43-1.19-.23-1.52.35l-.19.34,2.03,1.17.19-.34c.35-.61.24-1.09-.5-1.52Z"/>
+							<path class="fill-nmd" d="M107.35,45.95l-10.83-18.75-10.59-18.36c-1.55,2.66-3.09,5.31-4.64,7.96l8.29,14.37,8.54,14.78,2.14,3.71-2.14,3.71-8.54,14.78-8.28,14.34c1.55,2.65,3.1,5.31,4.64,7.96l10.58-18.33,10.83-18.75,2.14-3.71-2.14-3.71ZM89.57,81.02l-3.02.2,2.14,1.24-.61,1.06-3.72-2.15.69-1.19,2.89-.18-2.09-1.21.61-1.06,3.75,2.16-.65,1.12ZM92.53,75.82l-2.03-1.17,1.56,1.99-.34.6-2.44-.39,2,1.15-.62,1.06-3.71-2.15.72-1.26,2.6.32-1.56-2.13.72-1.25,3.71,2.15-.62,1.07ZM94.59,72.25l-.92,1.6-3.71-2.15.93-1.6c.67-1.15,1.75-1.74,3.04-1,1.28.74,1.34,1.99.67,3.15Z"/>
+						</g>
+						<path class="fill-cc" d="M31.24,4.48l-2.52,4.37-10.59,18.35-10.83,18.75h9.23l8.54-14.78,8.29-14.36,2.5-4.33h38.33c1.55-2.67,3.11-5.33,4.67-8H31.24ZM66.95,9.91c.36,0,.58-.02.95-.22l.29.96c-.44.2-.74.31-1.42.31-1.85,0-2.4-1.27-2.4-2.28s.59-2.24,2.4-2.24c.63,0,1.02.16,1.5.47l-.49.94c-.34-.29-.49-.36-.97-.36-.58,0-1.03.51-1.03,1.17s.46,1.24,1.16,1.24ZM70.99,9.91c.36,0,.58-.02.95-.22l.29.96c-.44.2-.74.31-1.42.31-1.85,0-2.4-1.27-2.4-2.28s.59-2.24,2.4-2.24c.63,0,1.02.16,1.5.47l-.49.94c-.34-.29-.49-.36-.97-.36-.58,0-1.03.51-1.03,1.17s.46,1.24,1.16,1.24Z"/>
+						<g>
+							<path class="fill-bdm" d="M14.86,59.49l-.14-.24-.81.46.14.24c.14.24.39.39.66.23.27-.16.31-.42.15-.69Z"/>
+							<path class="fill-bdm" d="M16.03,59.28c.24-.14.27-.38.17-.56l-.14-.24-.74.43.11.2c.13.23.35.32.6.17Z"/>
+							<path class="fill-bdm" d="M18.29,62.49l-.19-.34-2.03,1.17.19.34c.35.61.83.75,1.57.32.74-.43.79-.92.46-1.49Z"/>
+							<path class="fill-bdm" d="M74.22,86.84h-38.36l-2.51-4.35-8.28-14.34-8.54-14.78H7.3l10.83,18.75,10.58,18.33,2.53,4.39h47.65c-1.55-2.66-3.11-5.33-4.67-8ZM13.44,60.72l-1-1.74,3.72-2.15.94,1.63c.37.64.62,1.49-.18,1.96-.44.25-.87.13-1.11-.12.08.38,0,.89-.51,1.19-.62.36-1.31.16-1.85-.77ZM15.46,64.21l-.92-1.6,3.72-2.15.93,1.61c.67,1.15.64,2.39-.65,3.13-1.28.74-2.4.17-3.06-.99ZM19.49,71.2l-.62-1.07,2.03-1.17-2.5.36-.34-.6,1.56-1.92-2,1.15-.61-1.06,3.72-2.14.72,1.26-1.58,2.09,2.62-.28.72,1.25-3.72,2.15Z"/>
+						</g>
+					</g>
+				</g>
+			</symbol>
+		</svg>
+
+		<!-- =========================================================
+			WORKSPACE (main stage + hex grid)
+			========================================================= -->
+		<main class="workspace" role="main" aria-label="CIS workspace">
+            <section class="stage" id="stage" aria-label="Interactive hex map">
+                <a class="btn btn--close-overview"
+                    href="#!"
+                    aria-label="Close overview" title="Close">×</a>
+
+                <span class="app-title" role="button" tabindex="0"
+                    aria-label="Reset view and show all courses">CIS Overview</span>
+
+                <div class="layer" id="layer">
+                    <div class="hex-grid" id="hexGrid"></div>
+                </div>
+            </section>
+		</main>
+
+		<!-- =========================================================
+			DOCK (controls, legend, filters)
+			========================================================= -->
+		<aside class="dock" id="dock" aria-label="Controls and legend">
+            <!-- Dock handle -->
+            <div class="dock__handle" id="dockHandle" aria-label="Menu handle">
+                <button type="button" class="dock__toggle" id="dockToggleBtn" aria-label="Hide menu" title="Hide menu">▼</button>
+            </div>
+
+            <!-- Dock content -->
+            <div class="dock__content">
+                <!-- Header row -->
+                <div class="dock__row dock__row--spread">
+                    <h1 class="title">Controls</h1>
+                    <button type="button" class="btn" id="themeToggleBtn" aria-label="Switch theme">Dark theme</button>
+                </div>
+
+                <!-- View mode -->
+                <div class="dock__row mode-toggle" aria-label="Legend mode">
+                    <fieldset class="segmented" role="radiogroup" aria-label="View mode">
+                        <label>
+                            <input type="radio" name="viewMode" value="tracks" id="modeTracks" checked />
+                            <span>Tracks</span>
+                        </label>
+                        <label>
+                            <input type="radio" name="viewMode" value="blocks" id="modeBlocks" />
+                            <span>Blocks</span>
+                        </label>
+                    </fieldset>
+                </div>
+
+                <!-- Legends -->
+                <div class="legend-grid" id="legend" aria-label="Legend and filter summary">
+                    <!-- Tracks legend -->
+                    <div class="legend-box" id="legendTracks" aria-label="Track colors">
+                        <div class="legend-title">
+                            Tracks
+                            <button type="button" class="legend-info" id="trackInfoBtn"
+                                aria-controls="legendTrackNames" aria-expanded="false"
+                                title="Show full track names"><span class="icon-info" aria-hidden="true">i</span></button>
+                        </div>
+                        <div class="legend-tracks">
+                            <div class="legend-item">
+                                <span class="sq bdm" aria-hidden="true"></span>
+                                <span class="abbr">BDM</span>
+                            </div>
+                            <div class="legend-item">
+                                <span class="sq cc" aria-hidden="true"></span>
+                                <span class="abbr">CC</span>
+                            </div>
+                            <div class="legend-item">
+                                <span class="sq nmd" aria-hidden="true"></span>
+                                <span class="abbr">NMD</span>
+                            </div>
+                        </div>
+                        <div class="legend-names" id="legendTrackNames" hidden>
+                            <div><strong>BDM</strong> — Business Communication &amp; Digital Media</div>
+                            <div><strong>CC</strong> — Communication &amp; Cognition</div>
+                            <div><strong>NMD</strong> — New Media Design</div>
+                        </div>
+                    </div>
+
+                    <!-- Blocks legend -->
+                    <div class="legend-box" id="legendBlocks" aria-label="Block colors" hidden>
+                        <div class="legend-title">Blocks</div>
+                        <div class="legend-tracks">
+                            <div class="legend-item">
+                                <span class="sq bdm" aria-hidden="true"></span>
+                                <span class="abbr">1</span>
+                                <button type="button" class="info-btn" title="Block 1: Sept - Oct" aria-label="Block 1: Sept - Oct">
+                                <span class="icon-info" aria-hidden="true">i</span>
+                                </button>
+                            </div>
+                            <div class="legend-item">
+                                <span class="sq cc" aria-hidden="true"></span>
+                                <span class="abbr">2</span>
+                                <button type="button" class="info-btn" title="Block 2: Nov - Jan" aria-label="Block 2: Nov - Jan">
+                                <span class="icon-info" aria-hidden="true">i</span>
+                                </button>
+                            </div>
+                            <div class="legend-item">
+                                <span class="sq nmd" aria-hidden="true"></span>
+                                <span class="abbr">3</span>
+                                <button type="button" class="info-btn" title="Block 3: Feb - Mrt" aria-label="Block 3: Feb - Mrt">
+                                <span class="icon-info" aria-hidden="true">i</span>
+                                </button>
+                            </div>
+                            <div class="legend-item">
+                                <span class="sq extra" aria-hidden="true"></span>
+                                <span class="abbr">4</span>
+                                <button type="button" class="info-btn" title="Block 4: Apr - Jul" aria-label="Block 4: Apr - Jul">
+                                <span class="icon-info" aria-hidden="true">i</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Theme summary -->
+                    <div class="legend-box" id="legendThemeBox" aria-label="Theme summary">
+                        <div class="legend-title">Theme</div>
+                        <div class="legend-theme"><span id="legendTheme">(none)</span></div>
+                    </div>
+                </div>
+
+                <!-- Filters -->
+                <form class="controls controls--minimal" id="themeForm" aria-label="Course theme and visibility">
+                    <div class="toggle-stack">
+                        <!-- Theme chooser -->
+                        <details class="collapsible pill" id="themeDetails">
+                            <summary>Select a theme</summary>
+                            <div class="collapsible__body">
+                                <fieldset aria-label="Course theme filter">
+                                    <legend>Themes</legend>
+                                    <div class="group group--themes" id="themeGroup"></div>
+                                </fieldset>
+                            </div>
+                        </details>
+
+                        <!-- Course visibility -->
+                        <details class="collapsible pill" id="courseDetails">
+                            <summary>Select courses <span id="courseCount">(0 / 0)</span></summary>
+                            <div class="collapsible__body">
+                                <div class="bulk-actions" role="toolbar" aria-label="Bulk selection">
+                                    <button type="button" class="btn btn--ghost btn--sm" id="coursesAllBtn">Select all</button>
+                                    <button type="button" class="btn btn--ghost btn--sm" id="coursesNoneBtn">Deselect all</button>
+                                </div>
+                                <fieldset aria-label="Select courses">
+                                    <legend>Courses</legend>
+                                    <div class="group group--courses" id="courseGroup"></div>
+                                </fieldset>
+                            </div>
+                        </details>
+                    </div>
+                </form>
+
+                <!-- Actions -->
+                <div class="dock__row dock__row--actions">
+                    <a class="btn btn--download" href="#!" aria-label="Download" id="downloadBtn">Download</a>
+                </div>
+            </div>
+		</aside>
+
+		<!-- =========================================================
+			TIPS / TOAST / CENTER CTA
+			========================================================= -->
+		<aside class="tour" id="tour" aria-live="polite" aria-label="How to use this app">
+            <div class="tour__top">
+                <div class="tour__step" id="tourStep">1/3</div>
+                <button type="button" class="btn btn--ghost" id="tourHideBtn" aria-label="Don't show these tips again">Hide forever</button>
+            </div>
+            <div class="tour__body" id="tourText"></div>
+            <div class="tour__actions">
+                <button type="button" class="btn" id="tourPrevBtn">Back</button>
+                <button type="button" class="btn btn--ghost" id="tourNextBtn">Next</button>
+                <button type="button" class="btn btn--ghost" id="tourCloseBtn">Close</button>
+            </div>
+		</aside>
+
+		<div class="toast" id="toast" role="status" aria-live="polite"></div>
+		<button type="button" class="btn btn--center" id="centerBtn" aria-label="Center grid">Center</button>
+
+		<!-- =========================================================
+			INFO DRAWER
+			========================================================= -->
+		<div class="info" id="infoPanel" aria-label="More information" aria-live="polite">
+            <button type="button" class="info__close" id="infoCloseBtn" aria-label="Close details">×</button>
+            <p id="infoText">Select a course to see details here.</p>
+        </div>
+
+	<script>
+		/* =============================================================================
+			0) Config
+		============================================================================= */
+		const Config = {
+			defaultTheme: null,
+
+			minScaleFactor: 0.25,
+			maxScaleFactor: 6,
+
+			fitPaddingSmall: 8,
+			fitPaddingLarge: 30,
+			fitPaddingMax: 80,
+
+			trackLabels: {
+				BDM: 'Business Communication & Digital Media',
+				CC: 'Communication & Cognition',
+				NMD: 'New Media Design'
+			},
+
+			lightenDuringMotion: true,
+
+			dockTransitionMs: 280,
+			menuHexDelayMs: 200,
+			layerTransitionMs: 280,
+
+			/* Dock swipe threshold (px) */
+			dockSwipePx: 56
+		};
+
+		const HEX_SYMBOL_BY_TRACKS = {
+			'BDM': 'hex-bdm',
+			'CC': 'hex-cc',
+			'NMD': 'hex-nmd',
+			'BDM CC': 'hex-cc-bdm',
+			'CC NMD': 'hex-cc-nmd',
+			'BDM NMD': 'hex-bdm-nmd',
+			'BDM CC NMD': 'hex-all'
+		};
+
+		/* =============================================================================
+			Utility helpers
+		============================================================================= */
+		const Util = {
+			clamp(v, min, max) {
+				return Math.min(max, Math.max(min, v));
+			},
+
+			wait(ms) {
+				return new Promise((resolve) => setTimeout(resolve, ms));
+			},
+
+			nextFrame(frames = 1) {
+				return new Promise((resolve) => {
+					function step(n) {
+						if (n <= 0) return resolve();
+						requestAnimationFrame(() => step(n - 1));
+					}
+					step(frames);
+				});
+			},
+
+			escapeHtml(s) {
+				return String(s ?? '')
+					.replace(/&/g, '&amp;')
+					.replace(/</g, '&lt;')
+					.replace(/>/g, '&gt;')
+					.replace(/"/g, '&quot;')
+					.replace(/'/g, '&#39;');
+			},
+
+			isLandscape() {
+				return window.matchMedia('(orientation: landscape)').matches;
+			},
+
+			isTouchPrimary() {
+				return window.matchMedia('(pointer: coarse)').matches || ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
+			}
+		};
+
+		/* =============================================================================
+			1) App root
+		============================================================================= */
+		const App = {
+			state: {
+				scale: 1,
+				tx: 0,
+				ty: 0,
+				min: Config.minScaleFactor,
+				max: Config.maxScaleFactor,
+				baseScale: 1,
+				baseTx: 0,
+				baseTy: 0,
+				infoBiasTy: 0,
+
+				selection: {
+					theme: Config.defaultTheme,
+					hiddenIds: new Set()
+				},
+
+				focusedId: null,
+
+				dim: { w: 0, h: 0, isSmall: false },
+				gridBounds: { width: 0, height: 0 },
+
+				isDragging: false,
+				isPinching: false,
+
+				menu: {
+					isCollapsed: false,
+					userCollapsed: false,
+					autoCollapsed: false
+				},
+
+				lockInput: false,
+				rafId: null
+			},
+
+			el: {
+				stage: null,
+				layer: null,
+				workspace: null,
+				grid: null,
+
+				themeForm: null,
+				centerBtn: null,
+				downloadBtn: null,
+				legendTheme: null,
+
+				infoPanel: null,
+				infoText: null,
+				infoCloseBtn: null,
+
+				themeToggleBtn: null,
+
+				dock: null,
+				dockHandle: null,
+				dockToggleBtn: null,
+
+				themeGroup: null,
+				courseGroup: null,
+
+				themeDetails: null,
+				courseDetails: null,
+
+				tour: null,
+				tourStep: null,
+				tourText: null,
+				tourPrevBtn: null,
+				tourNextBtn: null,
+				tourCloseBtn: null,
+				tourHideBtn: null,
+
+				toast: null
+			},
+
+			cache: {
+				hexEls: [],
+				hexById: new Map(),
+				courseById: new Map(),
+
+				/* Layout extents (computed once on load) */
+				layoutExtent: null
+			}
+		};
+
+		/* =============================================================================
+			2) Layout (positioning; run once on load)
+			- If overviewData contains a structure for N courses, use it.
+			- Otherwise fall back to auto layout.
+			- Always assign positions from top-left to bottom-right (stable order).
+		============================================================================= */
+		App.Layout = (function () {
+			/* ----- Overview (client-provided structures) ---------------------------- */
+			let _overviewCache = null;
+			function loadOverview() {
+				if (_overviewCache) return _overviewCache;
+				try {
+					const raw = document.getElementById('overviewData')?.textContent || '{}';
+					_overviewCache = JSON.parse(raw) || {};
+				} catch (e) {
+					console.warn('[overviewData] Failed to parse; falling back to auto layout.', e);
+					_overviewCache = {};
+				}
+				return _overviewCache;
+			}
+
+			/**
+			 * Parse a compact pattern string like: "3-4-{5}-4-3" or "3-2-3-[4]-3-2-3"
+			 * Rules for clients (also documented next to #overviewData):
+			 * - Use hyphens (-) between columns, left to right.
+			 * - Use {x} when the middle column must be ODD (visually offset down by 0.5 row).
+			 * - Use [x] when the middle column must be EVEN (no visual offset).
+			 * - Optional alignment skips per column:
+			 *     '^t'  => skip the TOP-most hex (keep alignment as if height was x)
+			 *     '^b'  => skip the BOTTOM-most hex
+			 *   Example: "5^b" means a 5-high column but hide the bottom slot (shows 4).
+			 */
+			function parseOverviewPattern(pattern) {
+				if (!pattern || typeof pattern !== 'string') return null;
+				const rawTokens = pattern.split('-').map(s => s.trim()).filter(Boolean);
+				if (!rawTokens.length) return null;
+
+				// Detect middle token + parity from brackets
+				let midIdx = Math.floor(rawTokens.length / 2);
+				let middleOdd = null; // true => odd, false => even; null => infer from N later
+				function stripBrackets(tok) {
+					if (/^\{.+\}$/.test(tok)) { middleOdd = true;  return tok.slice(1, -1).trim(); }
+					if (/^\[.+\]$/.test(tok)) { middleOdd = false; return tok.slice(1, -1).trim(); }
+					return tok;
+				}
+				const tokens = rawTokens.map(stripBrackets);
+
+				// Columns: height + optional skip
+				const cols = tokens.map(t => {
+					const m = /^(\d+)(\^(t|b))?$/.exec(t);
+					if (!m) return { h: 0, skip: null };
+					const h = parseInt(m[1], 10) || 0;
+					const skip = m[3] === 't' ? 'first' : (m[3] === 'b' ? 'last' : null);
+					return { h, skip };
+				});
+
+				return { columns: cols, middleOdd, colCount: cols.length };
+			}
+
+			function generatePositionsFromParsed(N, parsed) {
+				if (!parsed || !Array.isArray(parsed.columns) || !parsed.columns.length) return null;
+				const columns = parsed.columns;
+				const cols = columns.length;
+				const D = Math.floor((cols - 1) / 2);
+				// Parity: if client specified via []/{}, use that; else default to (N % 2 === 1)
+				const middleOdd = (parsed.middleOdd != null) ? !!parsed.middleOdd : ((N % 2) === 1);
+
+				const positions = [];
+				for (let qi = 0; qi < cols; qi++) {
+					const q = qi - D;
+					const oddCol = ((Math.abs(q) + (middleOdd ? 1 : 0)) % 2) === 1;
+					const h = Math.max(0, columns[qi].h|0);
+					const skip = columns[qi].skip || null;
+					const yStart = -((h - 1) / 2);
+
+					for (let i = 0; i < h; i++) {
+						if (skip === 'first' && i === 0) continue;
+						if (skip === 'last'  && i === h - 1) continue;
+						const yK = yStart + i;
+						const r  = yK - (q * 0.5) - (oddCol ? 0.5 : 0);
+						positions.push({ q, r, odd: oddCol, xKey: q, yKey: yK });
+					}
+				}
+
+				// Compute extents
+				let minQ = Infinity, maxQ = -Infinity, minY = Infinity, maxY = -Infinity;
+				for (const p of positions) {
+					minQ = Math.min(minQ, p.q);
+					maxQ = Math.max(maxQ, p.q);
+					minY = Math.min(minY, p.yKey);
+					maxY = Math.max(maxY, p.yKey);
+				}
+				return { positions, extent: { minQ, maxQ, minY, maxY } };
+			}
+
+			function baseSum(H, D) {
+				// strict slope: H-|q|, q in [-D..D]
+				return (2 * D + 1) * H - (D * (D + 1));
+			}
+
+			function maxSum(H, D) {
+				// plateau at H for all columns
+				return (2 * D + 1) * H;
+			}
+
+			function scoreCandidate(N, H, D) {
+				const root = Math.sqrt(N + 2);
+				const preferD = Math.max(0, H - 2); // prefer truncated diamond edges>=2 when possible
+				const w = 2 * D + 1;
+
+				let score = 0;
+				score += Math.pow(H - root, 2) * 12;
+				score += Math.pow(D - preferD, 2) * 2.5;
+				score += w * 0.08;
+				score += H * 0.04;
+				return score;
+			}
+
+			function pickShape(N) {
+				const parity = N % 2;
+
+				let best = null;
+
+				for (let H = 2; H <= Math.max(2, N); H++) {
+					if ((H % 2) !== parity) continue;
+
+					const Dmax = Math.max(0, H - 1);
+					const Dstart = Math.max(0, H - 2);
+
+					// Try more diamond-like first, then reduce width
+					for (let D = Dstart; D >= 0; D--) {
+						const b = baseSum(H, D);
+						const m = maxSum(H, D);
+
+						if (b <= N && N <= m) {
+							const s = scoreCandidate(N, H, D);
+							if (!best || s < best.score) best = { H, D, score: s };
+							break;
+						}
+					}
+
+					// Also consider the full diamond (edges=1) if it helps
+					const Dfull = Dmax;
+					const bFull = baseSum(H, Dfull);
+					const mFull = maxSum(H, Dfull);
+					if (bFull <= N && N <= mFull) {
+						const sFull = scoreCandidate(N, H, Dfull);
+						if (!best || sFull < best.score) best = { H, D: Dfull, score: sFull };
+					}
+				}
+
+				if (!best) return { H: N || 2, D: 0 };
+				return { H: best.H, D: best.D };
+			}
+
+			function canInc(heights, i, incTo) {
+				// Ensure Lipschitz (adjacent diff <= 1)
+				const L = i - 1;
+				const R = i + 1;
+				if (L >= 0 && (incTo - heights[L] > 1)) return false;
+				if (R < heights.length && (incTo - heights[R] > 1)) return false;
+				return true;
+			}
+
+			function buildHeights(N) {
+				const { H, D } = pickShape(N);
+
+				const cols = 2 * D + 1;
+				const mid = D;
+
+				// Base strict slope: H - |q|
+				const heights = new Array(cols).fill(0).map((_, idx) => {
+					const dist = Math.abs(idx - mid);
+					return H - dist;
+				});
+
+				let sum = heights.reduce((a, b) => a + b, 0);
+				let extra = N - sum;
+
+				// Fill extra by raising symmetric column pairs from center outward.
+				// Since symmetry keeps parity correct, extra should be even.
+				let safety = 0;
+				while (extra > 0 && safety++ < 20000) {
+					let changed = false;
+
+					for (let dist = 1; dist <= D; dist++) {
+						const i = mid - dist;
+						const j = mid + dist;
+
+						if (extra < 2) break;
+
+						if (heights[i] >= H || heights[j] >= H) continue;
+
+						const nextI = heights[i] + 1;
+						const nextJ = heights[j] + 1;
+
+						if (!canInc(heights, i, nextI)) continue;
+						if (!canInc(heights, j, nextJ)) continue;
+
+						heights[i] = nextI;
+						heights[j] = nextJ;
+
+						extra -= 2;
+						changed = true;
+						break; // restart from nearest-to-center each time for nicer plateaus
+					}
+
+					if (!changed) break;
+				}
+
+				// Final hard clamp: ensure exact sum (fallback in edge cases)
+				sum = heights.reduce((a, b) => a + b, 0);
+				if (sum !== N) {
+					// As a last resort (very small N), rebuild as a single column.
+					return { H: N || 1, D: 0, heights: [N || 1] };
+				}
+
+				return { H, D, heights };
+			}
+
+			function yKey(q, r) {
+				// Mirrors the CSS vertical placement:
+				// y = (r + q*0.5)*dy + oddY; and oddY == 0.5*dy for odd q.
+				const odd = (Math.abs(q) % 2) === 1;
+				return r + (q * 0.5) + (odd ? 0.5 : 0);
+			}
+
+			function generatePositions(N, opts = {}) {
+				// If caller doesn’t supply, default to: odd N → odd middle; even N → even middle.
+				const middleOdd = (opts.middleOdd != null) ? !!opts.middleOdd : ((N % 2) === 1);
+				const shape = buildHeights(N);
+				const { D, heights } = shape;
+
+				const positions = [];
+
+				// IMPORTANT:
+				// Use the middle column as the baseline in "screen-space" (yKey), then derive r.
+				// This avoids over/under correcting columns caused by centering each column in r,
+				// while CSS applies a q-dependent vertical skew (q*0.5) plus odd-column offset.
+				//
+				// We build each column centered in yKey, then compute r so that:
+				//   yKey(q, r) === desiredYKey
+				// => r = desiredYKey - q*0.5 - (odd ? 0.5 : 0)
+				for (let qi = 0; qi < heights.length; qi++) {
+					const q = qi - D;
+					const h = heights[qi];
+					// Respect requested middle parity: if middleOdd=true, q=0 (and all even |q|) are the "odd"/offset columns.
+					const odd = ((Math.abs(q) + (middleOdd ? 1 : 0)) % 2) === 1;
+					
+					// Center the column in yKey (screen-space) so the overall silhouette is a true diamond.
+					const yStart = -((h - 1) / 2);
+					const yOddTerm = odd ? 0.5 : 0;
+
+					for (let i = 0; i < h; i++) {
+						const yK = yStart + i; // screen-space row key
+						const r = yK - (q * 0.5) - yOddTerm; // derive r so CSS lands on yK
+
+						positions.push({
+							q,
+							r,
+							odd,
+							xKey: q,
+							yKey: yK
+						});
+					}
+				}
+
+				// Top-left → bottom-right ordering
+				positions.sort((a, b) => {
+					if (a.yKey !== b.yKey) return a.yKey - b.yKey;
+					if (a.xKey !== b.xKey) return a.xKey - b.xKey;
+					return a.r - b.r;
+				});
+
+				const used = positions.slice(0, N);
+
+				// Compute extents for fitting (in q and yKey “grid units”)
+				let minQ = Infinity, maxQ = -Infinity, minY = Infinity, maxY = -Infinity;
+				for (const p of used) {
+					minQ = Math.min(minQ, p.q);
+					maxQ = Math.max(maxQ, p.q);
+					minY = Math.min(minY, p.yKey);
+					maxY = Math.max(maxY, p.yKey);
+				}
+
+				return {
+					positions: used,
+					extent: { minQ, maxQ, minY, maxY }
+				};
+			}
+
+			function fmt(n) {
+				return Number.isInteger(n) ? String(n) : String(n);
+			}
+
+			function applyToCourses(courses) {
+				const N = courses.length;
+				// Default: auto layout with parity that matches total N (odd ↔ odd middle)
+				const defaultMiddleOdd = ((N % 2) === 1);
+				const auto = generatePositions(N, { middleOdd: defaultMiddleOdd });
+				let positions = auto.positions;
+				let extent = auto.extent;
+
+				// Try overview pattern first
+				const ov = loadOverview();
+				const raw = ov?.[String(N)];
+				let parsed = null;
+				if (typeof raw === 'string') parsed = parseOverviewPattern(raw);
+				else if (raw && typeof raw === 'object' && typeof raw.pattern === 'string') parsed = parseOverviewPattern(raw.pattern);
+
+				if (parsed) {
+					const manual = generatePositionsFromParsed(N, parsed);
+					if (manual && Array.isArray(manual.positions) && manual.positions.length) {
+						// If manual produces fewer positions than N, pad with auto so we ALWAYS place N courses.
+						if (manual.positions.length >= N) {
+							positions = manual.positions.slice(0, N);
+							extent = manual.extent;
+						} else {
+							const need = N - manual.positions.length;
+							const usedKeys = new Set(manual.positions.map(p => `${p.q}:${p.r}`));
+							// IMPORTANT: make padding honor the same middle parity the client asked for.
+							const padParity = (parsed.middleOdd != null) ? !!parsed.middleOdd : defaultMiddleOdd;
+							const autoPad = generatePositions(N, { middleOdd: padParity });
+							const pad = [];
+							for (const p of autoPad.positions) {
+								const k = `${p.q}:${p.r}`;
+								if (!usedKeys.has(k)) {
+									pad.push(p);
+									if (pad.length === need) break;
+								}
+							}
+							positions = manual.positions.concat(pad);
+							// recompute extents over the combined set
+							let minQ = Infinity, maxQ = -Infinity, minY = Infinity, maxY = -Infinity;
+							for (const p of positions) {
+								minQ = Math.min(minQ, p.q);
+								maxQ = Math.max(maxQ, p.q);
+								minY = Math.min(minY, p.yKey ?? (p.r + (p.q * 0.5) + ((Math.abs(p.q) % 2) ? 0.5 : 0)));
+								maxY = Math.max(maxY, p.yKey ?? (p.r + (p.q * 0.5) + ((Math.abs(p.q) % 2) ? 0.5 : 0)));
+							}
+							extent = { minQ, maxQ, minY, maxY };
+						}
+					}
+				}
+
+				for (let i = 0; i < courses.length; i++) {
+					const c = courses[i];
+					const p = positions[i];
+
+					c._pos = { q: p.q, r: p.r, odd: p.odd };
+					c.style = `--q:${fmt(p.q)};--r:${fmt(p.r)}`;
+				}
+
+				return extent;
+			}
+
+			return { applyToCourses };
+		})();
+
+		/* =============================================================================
+			3) Domain (Courses)
+		============================================================================= */
+		App.Domain = (function () {
+			let _all = [];
+
+			function makeGeneratedId(i) {
+				// Stable per load, deterministic by order in coursesData
+				return `C${String(i + 1).padStart(3, '0')}`;
+			}
+
+			function load() {
+				const raw = document.getElementById('coursesData')?.textContent || '[]';
+				let list = [];
+				try { list = JSON.parse(raw); } catch (_) { list = []; }
+
+				const normalized = [];
+
+				for (let i = 0; i < (Array.isArray(list) ? list.length : 0); i++) {
+					const src = list[i];
+					const it = { ...(src && typeof src === 'object' ? src : {}) };
+
+					it.tracks = Array.isArray(it.tracks) ? it.tracks : [];
+					it.themes = Array.isArray(it.themes) ? it.themes : [];
+					it.block = Array.isArray(it.block) ? it.block : [];
+
+					it.id = makeGeneratedId(i);
+
+					it.title = String(it.title || '').trim();
+					it.code = String(it.code ?? '').trim();
+					it.description = String(it.description ?? '');
+
+					it.style = '';
+
+					if (!it.title) it.title = `Course ${i + 1}`;
+
+					it._dataset = {
+						tracksAttr: it.tracks.map(s => String(s).toUpperCase().trim()).filter(Boolean).join(' '),
+						themesAttr: it.themes.map(s => String(s).trim()).filter(Boolean).join(' ')
+					};
+
+					it._label = it.title;
+
+					normalized.push(it);
+				}
+
+				// Apply auto layout ONCE (no runtime recomputation)
+				const extent = App.Layout.applyToCourses(normalized);
+
+				_all = normalized;
+				App.cache.courseById = new Map(_all.map(c => [c.id, c]));
+				App.cache.layoutExtent = extent;
+			}
+
+			function all() {
+				return _all;
+			}
+
+			return { load, all };
+		})();
+
+		/* =============================================================================
+			4) Themes (deduplicated)
+		============================================================================= */
+		App.Themes = (function () {
+			let _all = [];
+
+			function load() {
+				const raw = document.getElementById('themesData')?.textContent || '[]';
+				let parsed = [];
+				try { parsed = JSON.parse(raw); } catch (_) { parsed = []; }
+
+				const byId = new Map();
+
+				for (const t of Array.isArray(parsed) ? parsed : []) {
+					let id = '';
+					let label = '';
+					let order = Infinity;
+
+					if (typeof t === 'string') {
+						id = t.trim();
+						label = id;
+					} else if (t && typeof t === 'object') {
+						id = String(t.id || t.label || '').trim();
+						label = String(t.label || id).trim();
+						order = Number.isFinite(t.order) ? t.order : Infinity;
+					}
+
+					if (!id) continue;
+
+					if (!byId.has(id)) {
+						byId.set(id, { id, label, order });
+					} else {
+						const prev = byId.get(id);
+						const bestOrder = Math.min(prev.order, order);
+						byId.set(id, { id, label: prev.label || label, order: bestOrder });
+					}
+				}
+
+				_all = [...byId.values()].sort((a, b) => (a.order - b.order) || a.label.localeCompare(b.label, undefined, { sensitivity: 'base' }));
+			}
+
+			function all() {
+				return _all;
+			}
+
+			return { load, all };
+		})();
+
+		/* =============================================================================
+			5) UI
+		============================================================================= */
+		App.UI = (function (app) {
+			let _transformPending = false;
+			let _dockTransitionTimer = null;
+
+			function bind() {
+				app.el.stage = document.getElementById('stage');
+				app.el.layer = document.getElementById('layer');
+				app.el.workspace = document.querySelector('.workspace');
+				app.el.grid = document.getElementById('hexGrid');
+
+				app.el.themeForm = document.getElementById('themeForm');
+				app.el.centerBtn = document.getElementById('centerBtn');
+				app.el.downloadBtn = document.getElementById('downloadBtn');
+
+				app.el.legendTheme = document.getElementById('legendTheme');
+
+				app.el.infoPanel = document.getElementById('infoPanel');
+				app.el.infoText = document.getElementById('infoText');
+				app.el.infoCloseBtn = document.getElementById('infoCloseBtn');
+
+				app.el.themeToggleBtn = document.getElementById('themeToggleBtn');
+
+				app.el.dock = document.getElementById('dock');
+				app.el.dockHandle = document.getElementById('dockHandle');
+				app.el.dockToggleBtn = document.getElementById('dockToggleBtn');
+
+				app.el.themeGroup = document.getElementById('themeGroup');
+				app.el.courseGroup = document.getElementById('courseGroup');
+
+				app.el.themeDetails = document.getElementById('themeDetails');
+				app.el.courseDetails = document.getElementById('courseDetails');
+
+				app.el.tour = document.getElementById('tour');
+				app.el.tourStep = document.getElementById('tourStep');
+				app.el.tourText = document.getElementById('tourText');
+				app.el.tourPrevBtn = document.getElementById('tourPrevBtn');
+				app.el.tourNextBtn = document.getElementById('tourNextBtn');
+				app.el.tourCloseBtn = document.getElementById('tourCloseBtn');
+				app.el.tourHideBtn = document.getElementById('tourHideBtn');
+
+				app.el.toast = document.getElementById('toast');
+
+				attachTrackTooltips();
+				attachBlockTooltips();
+				bindThemeToggle();
+				bindDockControls();
+				bindInfoClose();
+				bindLegendModeToggle();
+
+				window.addEventListener('resize', () => {
+					updateDockToggleUI();
+					updateWorkspaceReserve();
+				}, { passive: true });
+
+				[app.el.themeDetails, app.el.courseDetails].forEach((d) => {
+					if (!d) return;
+					d.addEventListener('toggle', () => updateWorkspaceReserve(), { passive: true });
+				});
+
+				updateDockToggleUI();
+				updateWorkspaceReserve();
+				wireDockSwipe();
+			}
+
+			function initCollapsiblesInitialState() {
+				[app.el.themeDetails, app.el.courseDetails].forEach((d) => {
+					if (!d) return;
+					d.open = false;
+					d.setAttribute('data-init', '1');
+				});
+			}
+
+			function attachTrackTooltips() {
+				const labelBy = Config.trackLabels || {};
+				const scroller = document.querySelector('.dock__content');
+
+				document.querySelectorAll('#legendTracks .legend-item').forEach((item) => {
+					const abbrEl = item.querySelector('.abbr');
+					if (!abbrEl) return;
+
+					const abbr = (abbrEl.textContent || '').trim();
+					const full = labelBy[abbr];
+					if (!full) return;
+
+					const btn = document.createElement('button');
+					btn.type = 'button';
+					btn.className = 'info-btn';
+					btn.setAttribute('aria-label', `Show full name for ${abbr}`);
+					btn.innerHTML = '<span class="icon-info" aria-hidden="true">i</span>';
+
+					const tip = document.createElement('div');
+					tip.className = 'track-tip';
+					tip.textContent = `${full}`;
+					tip.setAttribute('role', 'tooltip');
+					tip.id = `track-tip-${abbr.toLowerCase()}`;
+					btn.setAttribute('aria-describedby', tip.id);
+
+					abbrEl.setAttribute('title', full);
+
+					item.appendChild(btn);
+					document.body.appendChild(tip);
+
+					let isOpen = false;
+
+					const adjust = () => {
+						if (!isOpen) return;
+
+						const pad = 8;
+						const vw = Math.max(document.documentElement.clientWidth || 0, window.innerWidth || 0);
+						const vh = Math.max(document.documentElement.clientHeight || 0, window.innerHeight || 0);
+
+						const a = btn.getBoundingClientRect();
+						let left = a.left;
+						let top = a.bottom + 6;
+
+						tip.style.left = `${Math.round(left)}px`;
+						tip.style.top = `${Math.round(top)}px`;
+
+						let r = tip.getBoundingClientRect();
+
+						if (r.right > vw - pad) left -= (r.right - (vw - pad));
+						if (left < pad) left = pad;
+
+						if (r.bottom > vh - pad) top = a.top - r.height - 6;
+						if (top < pad) top = pad;
+
+						tip.style.left = `${Math.round(left)}px`;
+						tip.style.top = `${Math.round(top)}px`;
+					};
+
+					const show = () => {
+						if (isOpen) return;
+						tip.classList.add('is-open');
+						isOpen = true;
+						requestAnimationFrame(adjust);
+					};
+
+					const hide = () => {
+						if (!isOpen) return;
+						tip.classList.remove('is-open');
+						isOpen = false;
+					};
+
+					const toggle = () => (isOpen ? hide() : show());
+
+					btn.addEventListener('mouseenter', show);
+					btn.addEventListener('mouseleave', hide);
+					btn.addEventListener('focus', show);
+					btn.addEventListener('blur', hide);
+					btn.addEventListener('click', toggle);
+
+					item.addEventListener('mouseenter', show);
+					item.addEventListener('mouseleave', hide);
+
+					window.addEventListener('resize', () => { if (isOpen) adjust(); }, { passive: true });
+					scroller?.addEventListener('scroll', hide, { passive: true });
+				});
+			}
+
+			/* tooltips for Blocks legend (months) */
+			function attachBlockTooltips() {
+				const scroller = document.querySelector('.dock__content');
+				document.querySelectorAll('#legendBlocks .legend-item').forEach((item, idx) => {
+					const abbrEl = item.querySelector('.abbr');
+					const btn = item.querySelector('.info-btn');
+					if (!abbrEl || !btn) return;
+
+					const label = (abbrEl.textContent || '').trim();       // "1" | "2" | "3" | "4"
+					const months = (btn.getAttribute('title') || '').trim(); // "Sept - Oct" etc.
+
+					const tip = document.createElement('div');
+					tip.className = 'track-tip';
+					tip.textContent = `${months}`;
+					tip.setAttribute('role', 'tooltip');
+					const tipId = `block-tip-${label}`;
+					tip.id = tipId;
+					btn.setAttribute('aria-describedby', tipId);
+
+					item.appendChild(btn);
+					document.body.appendChild(tip);
+
+					let isOpen = false;
+					const adjust = () => {
+						if (!isOpen) return;
+						const pad = 8;
+						const vw = Math.max(document.documentElement.clientWidth || 0, window.innerWidth || 0);
+						const vh = Math.max(document.documentElement.clientHeight || 0, window.innerHeight || 0);
+						const a = btn.getBoundingClientRect();
+						let left = a.left;
+						let top = a.bottom + 6;
+						tip.style.left = `${Math.round(left)}px`;
+						tip.style.top = `${Math.round(top)}px`;
+						let r = tip.getBoundingClientRect();
+						if (r.right > vw - pad) left -= (r.right - (vw - pad));
+						if (left < pad) left = pad;
+						if (r.bottom > vh - pad) top = a.top - r.height - 6;
+						if (top < pad) top = pad;
+						tip.style.left = `${Math.round(left)}px`;
+						tip.style.top = `${Math.round(top)}px`;
+					};
+					const show = () => { if (!isOpen) { tip.classList.add('is-open'); isOpen = true; requestAnimationFrame(adjust); } };
+					const hide = () => { if (isOpen) { tip.classList.remove('is-open'); isOpen = false; } };
+					const toggle = () => (isOpen ? hide() : show());
+
+					btn.addEventListener('mouseenter', show);
+					btn.addEventListener('mouseleave', hide);
+					btn.addEventListener('focus', show);
+					btn.addEventListener('blur', hide);
+					btn.addEventListener('click', toggle);
+					item.addEventListener('mouseenter', show);
+					item.addEventListener('mouseleave', hide);
+					window.addEventListener('resize', () => { if (isOpen) adjust(); }, { passive: true });
+					scroller?.addEventListener('scroll', hide, { passive: true });
+				});
+			}
+
+			/* Bind Tracks/Blocks mode toggle */
+			function bindLegendModeToggle(){
+				const tracks = document.getElementById('modeTracks');
+				const blocks = document.getElementById('modeBlocks');
+				const boxTracks = document.getElementById('legendTracks');
+				const boxBlocks = document.getElementById('legendBlocks');
+				function apply(mode){
+					document.body.setAttribute('data-view-mode', mode);
+					const isBlocks = (mode === 'blocks');
+					boxTracks.hidden = isBlocks;
+					boxBlocks.hidden = !isBlocks;
+				}
+				tracks?.addEventListener('change', (e)=>{ if (e.target.checked) apply('tracks'); });
+				blocks?.addEventListener('change', (e)=>{ if (e.target.checked) apply('blocks'); });
+				/* init from body attr (default: tracks) */
+				apply(document.body.getAttribute('data-view-mode') || 'tracks');
+			}
+
+			function bindThemeToggle() {
+				const setText = () => {
+					const cur = document.body.getAttribute('data-ui-theme') || 'light';
+					const next = (cur === 'dark') ? 'Light theme' : 'Dark theme';
+					app.el.themeToggleBtn.textContent = next;
+					app.el.themeToggleBtn.setAttribute('aria-label', `Switch to ${next}`);
+				};
+
+				app.el.themeToggleBtn.addEventListener('click', () => {
+					const cur = document.body.getAttribute('data-ui-theme') || 'light';
+					document.body.setAttribute('data-ui-theme', (cur === 'dark') ? 'light' : 'dark');
+					setText();
+				});
+
+				setText();
+			}
+
+			function bindDockControls() {
+				app.el.dockToggleBtn.addEventListener('click', async () => {
+					if (isDockCollapsed()) {
+						if (app.state.focusedId) await App.Flow.deactivate('revealMenu');
+						revealDock('user');
+					} else {
+						collapseDock('user');
+					}
+				});
+
+				app.el.dockHandle.addEventListener('click', async (e) => {
+					if (e.target.closest('#dockToggleBtn')) return;
+					if (App._suppressHandleClickOnce) { App._suppressHandleClickOnce = false; return; }
+
+					if (isDockCollapsed()) {
+						if (app.state.focusedId) await App.Flow.deactivate('handleRevealMenu');
+						revealDock('user');
+					} else {
+						collapseDock('user');
+					}
+				});
+			}
+
+			function bindInfoClose() {
+				app.el.infoCloseBtn.addEventListener('click', () => {
+					App.Flow.deactivate('infoClose');
+				});
+			}
+
+			/* ----- Rendering ---------------------------------------------------------- */
+			function renderThemeFilters(themes) {
+				const group = app.el.themeGroup;
+				if (!group) return;
+
+				group.innerHTML = '';
+
+				const mkId = (s) => 'theme-' + String(s).toLowerCase().replace(/[^\w-]+/g, '-');
+
+				function addChip(value, label, id, extraClass = '') {
+					const wrap = document.createElement('label');
+					wrap.className = `chip${extraClass ? ' ' + extraClass : ''}`;
+
+					const input = document.createElement('input');
+					input.type = 'radio';
+					input.name = 'theme';
+					input.id = id;
+					input.value = value;
+
+					const selected = (value || null) === (app.state.selection.theme || null);
+					if (selected) input.checked = true;
+
+					const span = document.createElement('span');
+					span.textContent = label;
+
+					wrap.append(input, span);
+					group.appendChild(wrap);
+				}
+
+				addChip('', 'No theme (show all)', 'theme-none', 'chip--none');
+				for (const t of themes) addChip(t.id, t.label, mkId(t.id));
+
+				sizeThemeList();
+			}
+
+			function renderCourseSelector(items) {
+				const group = app.el.courseGroup;
+				if (!group) return;
+
+				group.innerHTML = '';
+
+				for (const v of items) {
+					const id = 'course-' + v.id;
+
+					const wrap = document.createElement('label');
+					wrap.className = 'check';
+					wrap.setAttribute('data-id', v.id);
+
+					const input = document.createElement('input');
+					input.type = 'checkbox';
+					input.id = id;
+					input.name = id;
+					input.checked = !app.state.selection.hiddenIds.has(v.id);
+
+					const span = document.createElement('span');
+					span.textContent = v.title;
+
+					wrap.append(input, span);
+					group.appendChild(wrap);
+				}
+
+				sizeCourseList();
+			}
+
+			function renderHexGrid(items) {
+				const frag = document.createDocumentFragment();
+				const hexById = new Map();
+				const hexEls = [];
+
+				for (const v of items) {
+					const hex = document.createElement('div');
+					hex.className = 'hex';
+					hex.setAttribute('style', v.style || '');
+
+					// odd-column helper class for correct vertical offset at any q
+					if (v._pos?.odd) hex.classList.add('hex--odd');
+
+					hex.setAttribute('data-id', v.id);
+					hex.setAttribute('data-track', v._dataset.tracksAttr);
+					hex.setAttribute('data-theme', v._dataset.themesAttr);
+					hex._themeSet = new Set((v._dataset.themesAttr || '').trim().split(/\s+/).filter(Boolean));
+					const b = Array.isArray(v.block) && v.block.length ? String(v.block[0]) : '';
+					hex.setAttribute('data-block', b);
+
+					const key = (Array.isArray(v.tracks) ? v.tracks : [])
+						.map(s => String(s).toUpperCase())
+						.sort()
+						.join(' ');
+					const symbolId = HEX_SYMBOL_BY_TRACKS[key] || 'hex-all';
+
+					const svgNS = 'http://www.w3.org/2000/svg';
+					const svg = document.createElementNS(svgNS, 'svg');
+					svg.setAttribute('class', 'hex__svg');
+					svg.setAttribute('preserveAspectRatio', 'xMidYMid meet');
+					svg.setAttribute('width', '100%');
+					svg.setAttribute('height', '100%');
+
+					const use = document.createElementNS(svgNS, 'use');
+					use.setAttribute('href', `#${symbolId}`);
+					svg.appendChild(use);
+
+					const label = document.createElement('span');
+					label.className = 'hex__label';
+					label.textContent = v._label;
+
+					const hit = document.createElement('div');
+					hit.className = 'hex__hit';
+					hit.setAttribute('tabindex', '0');
+					hit.setAttribute('role', 'button');
+					hit.setAttribute('aria-label', `Show details for ${v.title}`);
+
+					hex._hit = hit;
+					hex.append(svg, label, hit);
+
+					frag.appendChild(hex);
+					hexById.set(v.id, hex);
+					hexEls.push(hex);
+				}
+
+				app.el.grid.innerHTML = '';
+				app.el.grid.appendChild(frag);
+
+				app.cache.hexById = hexById;
+				app.cache.hexEls = hexEls;
+			}
+
+			/* ----- Transform ---------------------------------------------------------- */
+			function applyTransform() {
+				if (_transformPending) return;
+				_transformPending = true;
+
+				cancelAnimationFrame(app.state.rafId);
+				app.state.rafId = requestAnimationFrame(() => {
+					app.el.layer.style.setProperty('--scale', String(app.state.scale));
+					app.el.layer.style.setProperty('--tx', `${app.state.tx}px`);
+					app.el.layer.style.setProperty('--ty', `${app.state.ty}px`);
+					_transformPending = false;
+					updateCenterCTA();
+				});
+			}
+
+			/* ----- Legend / Info ------------------------------------------------------ */
+			function updateLegend(selection) {
+				if (app.el.legendTheme) app.el.legendTheme.textContent = selection.theme || '(none)';
+			}
+
+			function showInfo(item) {
+				const title = Util.escapeHtml(item.title);
+				const code = Util.escapeHtml(item.code || '-');
+				const tracks = Util.escapeHtml((item.tracks || []).join(', ') || '-');
+				const blocks = Util.escapeHtml((item.block || []).join(', ') || '-');
+				const description = Util.escapeHtml(item.description || '');
+
+				const html = `
+					<strong>${title} (${code})</strong>
+					<hr>
+					<strong>Track(s):</strong> ${tracks}<br>
+					<strong>Block:</strong> ${blocks}<br><br>
+					${description}
+				`;
+
+				app.el.infoText.innerHTML = html;
+				/* Ensure the info panel starts at the top whenever new content is shown */
+				app.el.infoPanel.scrollTop = 0;
+				/* Also enforce after paint in case transforms/DOM updates interfere */
+				requestAnimationFrame(() => {
+					app.el.infoPanel.scrollTop = 0;
+				});
+				app.el.infoPanel.classList.add('is-open');
+			}
+
+			function hideInfo() {
+				app.el.infoPanel.classList.remove('is-open');
+				/* Reset scroll so the next open starts at the top */
+				app.el.infoPanel.scrollTop = 0;
+			}
+
+			function updateCenterCTA() {
+				const epsS = 0.001, epsT = 1;
+				const offScale = Math.abs(app.state.scale - app.state.baseScale) > epsS;
+				const offTx = Math.abs(app.state.tx - app.state.baseTx) > epsT;
+				const offTy = Math.abs(app.state.ty - app.state.baseTy) > epsT;
+
+				const show = !!(app.state.focusedId || offScale || offTx || offTy || app.state.isDragging || app.state.isPinching);
+				app.el.centerBtn.classList.toggle('is-visible', show);
+			}
+
+			/* ----- Dock helpers ------------------------------------------------------- */
+			function isDockCollapsed() {
+				return document.body.classList.contains('dock-collapsed');
+			}
+
+			function syncMenuStateFlags() {
+				app.state.menu.isCollapsed = isDockCollapsed();
+			}
+
+			function afterDockTransition(cb) {
+				if (_dockTransitionTimer) {
+					clearTimeout(_dockTransitionTimer);
+					_dockTransitionTimer = null;
+				}
+
+				let called = false;
+				const done = () => {
+					if (called) return;
+					called = true;
+
+					syncMenuStateFlags();
+					updateDockToggleUI();
+					updateWorkspaceReserve();
+					if (typeof cb === 'function') cb();
+				};
+
+				const onEnd = (ev) => {
+					if (ev.target !== app.el.dock) return;
+					app.el.dock.removeEventListener('transitionend', onEnd);
+					done();
+				};
+
+				app.el.dock.addEventListener('transitionend', onEnd, { once: true });
+				_dockTransitionTimer = setTimeout(done, Config.dockTransitionMs + 60);
+			}
+
+			function collapseDock(source = 'user') {
+				document.body.classList.add('dock-collapsed');
+				app.el.dock.setAttribute('aria-hidden', 'true');
+
+				if (source === 'user') {
+					app.state.menu.userCollapsed = true;
+					app.state.menu.autoCollapsed = false;
+				} else if (source === 'auto') {
+					app.state.menu.autoCollapsed = true;
+				}
+
+				syncMenuStateFlags();
+				updateDockToggleUI();
+				updateWorkspaceReserve();
+				afterDockTransition();
+			}
+
+			function revealDock(source = 'user', cb) {
+				document.body.classList.remove('dock-collapsed');
+				app.el.dock.removeAttribute('aria-hidden');
+
+				if (source === 'user') {
+					app.state.menu.userCollapsed = false;
+					app.state.menu.autoCollapsed = false;
+				} else if (source === 'auto') {
+					app.state.menu.autoCollapsed = false;
+				}
+
+				syncMenuStateFlags();
+				updateDockToggleUI();
+				updateWorkspaceReserve();
+				afterDockTransition(cb);
+			}
+
+			function updateDockToggleUI() {
+				const collapsed = isDockCollapsed();
+				const landscape = Util.isLandscape();
+
+				let glyph = '▼';
+				if (!landscape && collapsed) glyph = '▲';
+				if (landscape && !collapsed) glyph = '▶';
+				if (landscape && collapsed) glyph = '◀';
+
+				app.el.dockToggleBtn.textContent = glyph;
+				app.el.dockToggleBtn.title = collapsed ? 'Show menu' : 'Hide menu';
+				app.el.dockToggleBtn.setAttribute('aria-label', collapsed ? 'Show menu' : 'Hide menu');
+			}
+
+			function updateWorkspaceReserve() {
+				if (!app.el.dock) return;
+
+				const collapsed = isDockCollapsed();
+				const landscape = Util.isLandscape();
+
+				const tab = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--dock-tab')) || 28;
+				const extra = 18;
+
+				if (!landscape) {
+					const h = collapsed ? (tab + 12) : app.el.dock.getBoundingClientRect().height;
+					document.documentElement.style.setProperty('--dock-reserve-bottom', `${Math.max(tab + 12, Math.round(h + extra))}px`);
+					document.documentElement.style.setProperty('--dock-reserve-right', '0px');
+				} else {
+					const w = collapsed ? (tab + 12) : app.el.dock.getBoundingClientRect().width;
+					document.documentElement.style.setProperty('--dock-reserve-right', `${Math.max(tab + 12, Math.round(w + extra))}px`);
+					document.documentElement.style.setProperty('--dock-reserve-bottom', '0px');
+				}
+			}
+
+			function wireDockSwipe() {
+				const handle = app.el.dockHandle;
+				if (!handle) return;
+
+				let active = false;
+				let startX = 0, startY = 0;
+				let lastX = 0, lastY = 0;
+				let pointerId = null;
+
+				function onDown(e) {
+					if (app.state.lockInput) return;
+					if (e.pointerType !== 'touch') return;
+
+					active = true;
+					pointerId = e.pointerId;
+					startX = lastX = e.clientX;
+					startY = lastY = e.clientY;
+
+					try { handle.setPointerCapture(pointerId); } catch (_) {}
+				}
+
+				function onMove(e) {
+					if (!active) return;
+					if (e.pointerId !== pointerId) return;
+
+					lastX = e.clientX;
+					lastY = e.clientY;
+
+					e.preventDefault();
+				}
+
+				async function onUp(e) {
+					if (!active) return;
+					if (e.pointerId !== pointerId) return;
+
+					active = false;
+					try { handle.releasePointerCapture(pointerId); } catch (_) {}
+
+					const dx = lastX - startX;
+					const dy = lastY - startY;
+					const collapsed = isDockCollapsed();
+					const landscape = Util.isLandscape();
+
+					const threshold = Config.dockSwipePx;
+					const straightEnough = (a, b) => Math.abs(b) <= Math.max(14, Math.abs(a) * 0.55);
+
+					let swiped = false;
+
+					if (!landscape) {
+						if (!collapsed && dy > threshold && straightEnough(dy, dx)) {
+							collapseDock('user'); swiped = true;
+						}
+						if (collapsed && dy < -threshold && straightEnough(dy, dx)) {
+							if (app.state.focusedId) await App.Flow.deactivate('swipeRevealMenu');
+							revealDock('user'); swiped = true;
+						}
+					} else {
+						if (!collapsed && dx > threshold && straightEnough(dx, dy)) {
+							collapseDock('user'); swiped = true;
+						}
+						if (collapsed && dx < -threshold && straightEnough(dx, dy)) {
+							if (app.state.focusedId) await App.Flow.deactivate('swipeRevealMenu');
+							revealDock('user'); swiped = true;
+						}
+					}
+
+					if (swiped) App._suppressHandleClickOnce = true;
+				}
+
+				handle.addEventListener('pointerdown', onDown);
+				handle.addEventListener('pointermove', onMove, { passive: false });
+				handle.addEventListener('pointerup', onUp);
+				handle.addEventListener('pointercancel', onUp);
+			}
+
+			/* ----- List sizing -------------------------------------------------------- */
+			function sizeThemeList() {
+				const group = app.el.themeGroup;
+				if (!group) return;
+
+				requestAnimationFrame(() => {
+					const first = group.querySelector('.chip');
+					if (!first) return;
+
+					const r = first.getBoundingClientRect();
+					const cs = getComputedStyle(group);
+					const gap = parseFloat(cs.rowGap || cs.gap || '8');
+
+					const target = (r.height * 3.8) + (gap * 2.0);
+					group.style.maxHeight = `${target}px`;
+					group.style.paddingBottom = `${gap * 0.25}px`;
+					updateWorkspaceReserve();
+				});
+			}
+
+			function sizeCourseList() {
+				const group = app.el.courseGroup;
+				if (!group) return;
+
+				requestAnimationFrame(() => {
+					const first = group.querySelector('.check');
+					if (!first) return;
+
+					const r = first.getBoundingClientRect();
+					const cs = getComputedStyle(group);
+					const gap = parseFloat(cs.rowGap || cs.gap || '8');
+
+					const target = (r.height * 4.5) + (gap * 3.5);
+					group.style.maxHeight = `${target}px`;
+					group.style.paddingBottom = `${gap * 0.25}px`;
+					updateWorkspaceReserve();
+				});
+			}
+
+			/* ----- Intro -------------------------------------------------------------- */
+			function playIntro() {
+				const intro = document.getElementById('intro');
+				if (!intro) return;
+				
+				const kill = () => intro.remove();
+				
+				// Option A — mask reveal with JS-driven radius (prevents “growing square”)
+				const supportsMask =
+					(typeof CSS !== 'undefined' && (
+						CSS.supports('mask-image', 'radial-gradient(circle at 50% 50%, black 1px, transparent 0)') ||
+						CSS.supports('-webkit-mask-image', 'radial-gradient(circle, #000, transparent)')
+					));
+					
+				if (supportsMask) {
+					intro.classList.add('cis-intro--mask');
+					// fall through to JS radius animation below
+				}
+				
+				// JS-driven var() animation (used for both mask + gradient fallback)
+				// Keeps original "hole reveal" aesthetic using the same radial-gradient.
+				const DURATION = 1100;
+				const START_DELAY = 120;
+				const start = performance.now() + START_DELAY;
+				const end = start + DURATION;
+				// EaseInOutQuad
+				const ease = (t) => (t < 0.5) ? (2 * t * t) : (1 - Math.pow(-2 * t + 2, 2) / 2);
+				
+				function frame(now) {
+					if (now < start) { requestAnimationFrame(frame); return; }
+					const p = Math.min(1, (now - start) / (end - start));
+					const r = 140 * ease(p); // vmax radius
+					intro.style.setProperty('--reveal', r + 'vmax');
+					if (p < 1) {
+						requestAnimationFrame(frame);
+					} else {
+						kill();
+					}
+				}
+				requestAnimationFrame(frame);
+			}
+
+			return {
+				bind,
+				initCollapsiblesInitialState,
+
+				renderThemeFilters,
+				renderCourseSelector,
+				renderHexGrid,
+
+				applyTransform,
+
+				updateLegend,
+				showInfo,
+				hideInfo,
+				updateCenterCTA,
+
+				isDockCollapsed,
+				collapseDock,
+				revealDock,
+				updateWorkspaceReserve,
+
+				sizeThemeList,
+				sizeCourseList,
+
+				playIntro
+			};
+		})(App);
+
+		/* =============================================================================
+			6) Interaction (pan/zoom/tap, filters, resize)
+		============================================================================= */
+		App.Interaction = (function (app) {
+			const pointers = new Map();
+			let startX = 0, startY = 0, startTX = 0, startTY = 0;
+			let lastDist = 0;
+			let motionTimer = 0;
+
+			let isTap = false;
+			let downTarget = null;
+			let downX = 0, downY = 0;
+
+			function centerOfStage() {
+				const r = app.el.stage.getBoundingClientRect();
+				return { x: r.left + r.width / 2, y: r.top + r.height / 2, rect: r };
+			}
+
+			function gridIntrinsicSize() {
+				// Prefer layout extents computed on load (stable), converted to px by reading
+				// the *primitive* CSS vars (px numbers) and computing derived values in JS.
+				// Reason: derived vars like --w/--dx are calc(...) and parseFloat("calc(...)") => NaN.
+				const extent = app.cache.layoutExtent;
+				const g = app.el.grid;
+				
+				if (extent && g) {
+					const cs = getComputedStyle(g);
+
+					const pxVar = (name, fallback) => {
+						const raw = (cs.getPropertyValue(name) || '').trim();
+						const n = parseFloat(raw);
+						return Number.isFinite(n) ? n : fallback;
+					};
+
+					// Primitive vars are declared as px values (parseFloat is safe here)
+					const flat = pxVar('--flat', 320);
+					const halfH = pxVar('--halfH', 140);
+					const hexSpace = pxVar('--hex-space', 24);
+					const colGap = pxVar('--col-gap', -105);
+
+					// Mirror CSS geometry:
+					// --tri: halfH * 0.606
+					// --w: flat + tri*2
+					// --h: halfH*2
+					// --dx: w*0.75 + colGap
+					// --dy: h + hexSpace
+					const tri = halfH * 0.606;
+					const w = flat + (tri * 2);
+					const h = halfH * 2;
+					const dx = (w * 0.75) + colGap;
+					const dy = h + hexSpace;
+
+					const colSpan = Math.max(0, extent.maxQ - extent.minQ);
+					const rowSpan = Math.max(0, extent.maxY - extent.minY);
+
+					return {
+						width: Math.max(1, w + dx * colSpan),
+						height: Math.max(1, h + dy * rowSpan)
+					};
+				}
+				
+				// Fallback (should not be needed in normal runs)
+				const w = Math.max(1, g?.offsetWidth || g?.scrollWidth || 1);
+				const h = Math.max(1, g?.offsetHeight || g?.scrollHeight || 1);
+				return { width: w, height: h };
+			}
+
+			function setDims() {
+				const w = window.innerWidth;
+				const h = window.innerHeight;
+
+				app.state.dim.w = w;
+				app.state.dim.h = h;
+				app.state.dim.isSmall = w < 600;
+
+				const vw = w / 100;
+				const vh = h / 100;
+				const s = Math.max(.72, Math.min(1, Math.min(vw * 100, vh * 100) / 900));
+				document.documentElement.style.setProperty('--ui-scale', s.toFixed(3));
+			}
+
+			function measureBaseFitOnly() {
+				setDims();
+
+				const stageRect = app.el.stage.getBoundingClientRect();
+				const gridBounds = gridIntrinsicSize();
+
+				const isSmall = app.state.dim.isSmall;
+				const pad = Math.max(
+					isSmall ? Config.fitPaddingSmall : Config.fitPaddingLarge,
+					Math.min(
+						isSmall ? 30 : Config.fitPaddingMax,
+						Math.round(Math.max(app.state.dim.w, app.state.dim.h) * (isSmall ? 0.01 : 0.02))
+					)
+				);
+
+				const availW = Math.max(stageRect.width - pad * 2, 1);
+				const availH = Math.max(stageRect.height - pad * 2, 1);
+
+				const baseScale = Math.min(availW / gridBounds.width, availH / gridBounds.height) || 1;
+				const min = Math.max(0.1, baseScale * 0.25);
+				const max = baseScale * 6;
+
+				return { baseScale, min, max, gridBounds };
+			}
+
+			function fitAll() {
+				const m = measureBaseFitOnly();
+
+				app.state.gridBounds = m.gridBounds;
+				app.state.baseScale = m.baseScale;
+				app.state.min = m.min;
+				app.state.max = m.max;
+
+				app.state.scale = m.baseScale;
+				app.state.tx = app.state.baseTx = 0;
+				app.state.ty = app.state.baseTy = 0;
+
+				const stageRect = app.el.stage.getBoundingClientRect();
+				app.state.infoBiasTy = -Math.min(400, stageRect.height * 0.2);
+
+				App.UI.applyTransform();
+			}
+
+			function adoptNewBasePreservingView() {
+				const { baseScale: newBase, min: newMin, max: newMax, gridBounds } = measureBaseFitOnly();
+
+				const oldBase = app.state.baseScale || 1;
+				const s0 = app.state.scale || 1;
+				const tx0 = app.state.tx || 0;
+				const ty0 = app.state.ty || 0;
+
+				app.state.baseScale = newBase;
+				app.state.min = newMin;
+				app.state.max = newMax;
+				app.state.gridBounds = gridBounds;
+
+				const s1Wanted = s0 * (newBase / oldBase);
+				const s1 = Util.clamp(s1Wanted, app.state.min, app.state.max);
+				const r = s0 / s1;
+
+				app.state.scale = s1;
+				app.state.tx = tx0 * r;
+				app.state.ty = ty0 * r;
+
+				App.UI.applyTransform();
+			}
+
+			function applyFilter() {
+				const theme = app.state.selection.theme;
+				const focusedId = app.state.focusedId;
+				const hidden = app.state.selection.hiddenIds;
+
+				app.el.grid.querySelectorAll('.hex').forEach((el) => {
+					const id = el.getAttribute('data-id');
+					const themesAttr = (el.getAttribute('data-theme') || '').trim();
+					const themes = themesAttr ? themesAttr.split(/\s+/) : [];
+
+					const deselectedByCourse = hidden.has(id);
+					const mismatchTheme = !!theme && !themes.includes(theme);
+					const shouldDim = deselectedByCourse || mismatchTheme;
+					
+					/* Never fully remove hexes for deselection; just dim them */
+					el.classList.remove('hex--hidden');
+					el.classList.toggle('hex--dim', shouldDim);
+
+					if (focusedId) {
+						el.classList.toggle('hex--subdue',
+							!shouldDim && id !== focusedId);
+					} else {
+						el.classList.remove('hex--subdue');
+					}
+
+					if (id === focusedId) {
+						el.classList.remove('hex--dim', 'hex--subdue');
+					}
+				});
+
+				App.UI.updateLegend(app.state.selection);
+				try { updateCourseCount(); } catch(_) {}
+			}
+
+			function bumpMoving() {
+				if (Config.lightenDuringMotion) document.body.classList.add('is-moving');
+				clearTimeout(motionTimer);
+				motionTimer = setTimeout(() => document.body.classList.remove('is-moving'), 120);
+			}
+
+			function focusById(id) {
+				const layer = app.el.layer;
+				let measuring = false;
+				try {
+					layer.classList.add('is-measuring'); // CSS already disables transitions for .is-measuring
+					measuring = true;
+					const el = app.cache.hexById.get(id);
+					if (!el) return;
+
+					const prev = app.el.grid.querySelector('.hex--focus');
+					if (prev && prev !== el) prev.classList.remove('hex--focus');
+
+					el.classList.add('hex--focus');
+					app.state.focusedId = id;
+
+					const center = centerOfStage();
+					const stageRect = center.rect;
+					const rect = el.getBoundingClientRect();
+
+					const target = 0.7 * Math.min(stageRect.width, stageRect.height);
+					const s0 = app.state.scale;
+					const sWanted = target / Math.max(rect.width, rect.height);
+					const s1 = Util.clamp(s0 * sWanted, app.state.min, app.state.max);
+
+					const hexCx = rect.left + rect.width / 2;
+					const hexCy = rect.top + rect.height / 2;
+
+					const Dx = center.x;
+					const Dy = stageRect.top + stageRect.height / 3;
+
+					const T1x = (Dx - center.x) / s1 - (hexCx - center.x) / s0 + app.state.tx;
+					const T1y = (Dy - center.y) / s1 - (hexCy - center.y) / s0 + app.state.ty;
+
+					app.state.scale = s1;
+					app.state.tx = T1x;
+					app.state.ty = T1y;
+
+					App.UI.applyTransform();
+
+					const item = App.cache.courseById.get(id);
+					if (item) App.UI.showInfo(item);
+
+					applyFilter();
+					App.UI.updateCenterCTA();
+
+					App.Tips?.tipOnFocus?.();
+
+				} finally {
+					if (measuring) layer.classList.remove('is-measuring');
+				}
+				
+			}
+
+			function clearFocus() {
+				if (app.state.focusedId) {
+					const prev = app.cache.hexById.get(app.state.focusedId);
+					prev?.classList.remove('hex--focus');
+				}
+				app.state.focusedId = null;
+				App.UI.hideInfo();
+				applyFilter();
+				App.UI.updateCenterCTA();
+			}
+
+			function recenter(opts = {}) {
+				const { withInfoBias = false } = opts;
+
+				app.state.scale = app.state.baseScale;
+				app.state.tx = app.state.baseTx;
+				app.state.ty = withInfoBias ? app.state.infoBiasTy : app.state.baseTy;
+
+				App.UI.applyTransform();
+				App.UI.updateCenterCTA();
+			}
+
+			function onWheel(e) {
+				if (app.state.lockInput) return;
+
+				e.preventDefault();
+
+				const k = e.ctrlKey ? 0.04 : 0.10;
+				const f = e.deltaY > 0 ? (1 - k) : (1 + k);
+
+				const center = centerOfStage();
+				const s0 = app.state.scale;
+				const s1 = Util.clamp(s0 * f, app.state.min, app.state.max);
+				const ratio = s1 / s0;
+
+				const cx = e.clientX, cy = e.clientY;
+
+				app.state.tx = (1 - ratio) * (cx - center.x) + ratio * app.state.tx;
+				app.state.ty = (1 - ratio) * (cy - center.y) + ratio * app.state.ty;
+				app.state.scale = s1;
+
+				App.UI.applyTransform();
+				App.UI.updateCenterCTA();
+
+				bumpMoving();
+			}
+
+			function dist(a, b) {
+				const dx = a.x - b.x;
+				const dy = a.y - b.y;
+				return Math.hypot(dx, dy);
+			}
+
+			function midpoint(a, b) {
+				return { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 };
+			}
+
+			function onPointerDown(e) {
+				if (app.state.lockInput) return;
+				if (e.button !== 0) return;
+
+				pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+
+				downTarget = e.target || null;
+				downX = e.clientX;
+				downY = e.clientY;
+				isTap = true;
+
+				try { e.target.setPointerCapture(e.pointerId); } catch (_) {}
+
+				if (pointers.size === 1) {
+					app.state.isDragging = false;
+					startX = e.clientX;
+					startY = e.clientY;
+					startTX = app.state.tx;
+					startTY = app.state.ty;
+				} else if (pointers.size === 2) {
+					app.state.isPinching = true;
+					isTap = false;
+
+					const [a, b] = [...pointers.values()];
+					lastDist = dist(a, b);
+					bumpMoving();
+				}
+			}
+
+			function onPointerMove(e) {
+				if (!pointers.has(e.pointerId)) return;
+				if (app.state.lockInput) return;
+
+				pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+
+				if (app.state.isPinching && pointers.size >= 2) {
+					const [a, b] = [...pointers.values()];
+					const d = dist(a, b);
+
+					if (d > 0 && lastDist > 0) {
+						const m = midpoint(a, b);
+						const center = centerOfStage();
+
+						const s0 = app.state.scale;
+						const s1 = Util.clamp(s0 * (d / lastDist), app.state.min, app.state.max);
+						const r = s1 / s0;
+
+						app.state.tx = (1 - r) * (m.x - center.x) + r * app.state.tx;
+						app.state.ty = (1 - r) * (m.y - center.y) + r * app.state.ty;
+						app.state.scale = s1;
+
+						App.UI.applyTransform();
+						lastDist = d;
+
+						bumpMoving();
+					}
+				} else if (pointers.size === 1) {
+					const dx = e.clientX - startX;
+					const dy = e.clientY - startY;
+					const moved = Math.hypot(dx, dy) > 4;
+
+					if (moved) isTap = false;
+
+					if (!app.state.isDragging && moved) {
+						app.state.isDragging = true;
+						document.body.classList.add('is-dragging');
+						if (Config.lightenDuringMotion) document.body.classList.add('is-moving');
+					}
+
+					if (app.state.isDragging) {
+						app.state.tx = startTX + dx;
+						app.state.ty = startTY + dy;
+						App.UI.applyTransform();
+					}
+				}
+
+				App.UI.updateCenterCTA();
+			}
+
+			function onPointerUp(e) {
+				if (!pointers.has(e.pointerId)) return;
+
+				pointers.delete(e.pointerId);
+
+				try { e.target.releasePointerCapture(e.pointerId); } catch (_) {}
+
+				if (pointers.size === 0) {
+					if (isTap && !app.state.lockInput) {
+						const moved = Math.hypot(e.clientX - downX, e.clientY - downY) > 6;
+						const hexHit = !moved && downTarget && downTarget.closest ? downTarget.closest('.hex__hit') : null;
+						const hexEl = hexHit ? hexHit.closest('.hex') : null;
+						const id = hexEl?.getAttribute('data-id');
+
+						if (id) {
+							if (app.state.focusedId === id) App.Flow.deactivate('activeHexClick');
+							else App.Flow.activate(id);
+						} else {
+							App.Flow.deactivate('emptyTap');
+						}
+					}
+
+					app.state.isDragging = false;
+					app.state.isPinching = false;
+
+					isTap = false;
+					downTarget = null;
+
+					document.body.classList.remove('is-dragging');
+					if (Config.lightenDuringMotion) document.body.classList.remove('is-moving');
+				} else if (pointers.size === 1) {
+					app.state.isPinching = false;
+
+					const p = [...pointers.values()][0];
+					startX = p.x;
+					startY = p.y;
+					startTX = app.state.tx;
+					startTY = app.state.ty;
+				}
+
+				App.UI.updateCenterCTA();
+			}
+
+			function onKeydown(e) {
+				if (app.state.lockInput) return;
+
+				if ((e.key === 'Enter' || e.key === ' ') && document.activeElement?.classList?.contains('hex__hit')) {
+					e.preventDefault();
+					const hex = document.activeElement.closest('.hex');
+					const id = hex?.getAttribute('data-id');
+					if (!id) return;
+
+					if (app.state.focusedId === id) App.Flow.deactivate('keyboardToggleOff');
+					else App.Flow.activate(id);
+				}
+
+				if (e.key === 'Escape') {
+					if (app.state.focusedId) App.Flow.deactivate('esc');
+				}
+			}
+
+			function bindFiltersDelegated() {
+				app.el.themeGroup.addEventListener('change', async (e) => {
+					const target = e.target;
+					if (!(target instanceof HTMLInputElement)) return;
+					if (target.type !== 'radio' || target.name !== 'theme') return;
+					if (!target.checked) return;
+
+					const v = (target.value || '').trim();
+					app.state.selection.theme = v || null;
+
+					if (v) {
+						const newHidden = new Set();
+						for (const c of App.Domain.all()) {
+							const hasTheme = (c.themes || []).map(String).includes(v);
+							if (!hasTheme) newHidden.add(c.id);
+						}
+						app.state.selection.hiddenIds = newHidden;
+					} else {
+						/* No theme → select them all */
+						app.state.selection.hiddenIds.clear();
+					}
+					
+					/* Reflect in the checkbox list */
+					try { syncCourseCheckboxesToHiddenSet(); } catch(_) {}
+
+					await App.Flow.deactivate('themeChange');
+					applyFilter();
+
+					if (v) App.Tips.tipOnFilter();
+				});
+
+				/* Helper: any manual course selection should override/clear an active theme filter */
+				function forceNoThemeAndReflectUI(){
+					if (app.state.selection.theme) {
+						app.state.selection.theme = null;
+						const noneRadio = document.querySelector('#themeGroup input[name="theme"][value=""]');
+						if (noneRadio) noneRadio.checked = true;
+						App.UI.updateLegend(app.state.selection);
+					}
+				}
+
+				app.el.courseGroup.addEventListener('change', async (e) => {
+					const target = e.target;
+					if (!(target instanceof HTMLInputElement)) return;
+					if (target.type !== 'checkbox') return;
+
+					const wrap = target.closest('.check');
+					const id = wrap?.getAttribute('data-id');
+					if (!id) return;
+
+					if (target.checked) app.state.selection.hiddenIds.delete(id);
+					else app.state.selection.hiddenIds.add(id);
+
+					forceNoThemeAndReflectUI();
+
+					if (!target.checked && app.state.focusedId === id) {
+						await App.Flow.deactivate('courseHidden');
+					}
+
+					applyFilter();
+					try { updateCourseCount(); } catch(_) {}
+				});
+			}
+
+			function bindCourseBulkActions() {
+				const selectAllBtn = document.getElementById('coursesAllBtn');
+				const selectNoneBtn = document.getElementById('coursesNoneBtn');
+
+				function setAll(checked) {
+					if (app.state.selection.theme) {
+						app.state.selection.theme = null;
+						const noneRadio = document.querySelector('#themeGroup input[name="theme"][value=""]');
+						if (noneRadio) noneRadio.checked = true;
+						App.UI.updateLegend(app.state.selection);
+					}
+					
+					const boxes = [...app.el.courseGroup.querySelectorAll('input[type="checkbox"]')];
+					for (const b of boxes) {
+						const wrap = b.closest('.check');
+						const id = wrap?.getAttribute('data-id');
+						if (!id) continue;
+
+						b.checked = checked;
+						if (checked) app.state.selection.hiddenIds.delete(id);
+						else app.state.selection.hiddenIds.add(id);
+					}
+					applyFilter();
+					try { updateCourseCount(); } catch(_) {}
+				}
+
+				selectAllBtn?.addEventListener('click', () => setAll(true));
+				selectNoneBtn?.addEventListener('click', () => setAll(false));
+			}
+
+			function attach() {
+				app.el.layer.addEventListener('wheel', onWheel, { passive: false });
+
+				app.el.layer.addEventListener('pointerdown', onPointerDown);
+				document.addEventListener('pointermove', onPointerMove, { passive: true });
+				document.addEventListener('pointerup', onPointerUp, { passive: true });
+				document.addEventListener('pointercancel', onPointerUp, { passive: true });
+
+				app.el.layer.addEventListener('gesturestart', (e) => e.preventDefault());
+				document.addEventListener('keydown', onKeydown);
+
+				app.el.centerBtn.addEventListener('click', async () => {
+					if (app.state.focusedId) await App.Flow.deactivate('centerBtn');
+					else recenter();
+				});
+
+				app.el.downloadBtn.addEventListener('click', (e) => {
+					e.preventDefault();
+					App.Export.run();
+				});
+
+				bindFiltersDelegated();
+				bindCourseBulkActions();
+			}
+
+			/* (x / total) counter helpers */
+			function updateCourseCount() {
+				const total = App.Domain.all().length;
+				const checked = [...app.el.courseGroup.querySelectorAll('input[type="checkbox"]')].filter(cb => cb.checked).length;
+				const el = document.getElementById('courseCount');
+				if (el) el.textContent = `(${checked} / ${total})`;
+			}
+			
+			function syncCourseCheckboxesToHiddenSet() {
+				const boxes = [...app.el.courseGroup.querySelectorAll('input[type="checkbox"]')];
+				for (const b of boxes) {
+					const id = b.closest('.check')?.getAttribute('data-id');
+					if (!id) continue;
+					b.checked = !App.state.selection.hiddenIds.has(id);
+				}
+				updateCourseCount();
+			}
+
+			let _resizeTimer = null;
+			function onResize() {
+				clearTimeout(_resizeTimer);
+				_resizeTimer = setTimeout(() => {
+					adoptNewBasePreservingView();
+
+					try {
+						App.UI.sizeThemeList();
+						App.UI.sizeCourseList();
+						App.UI.updateWorkspaceReserve();
+					} catch (_) {}
+
+					if (app.state.focusedId) {
+						const id = app.state.focusedId;
+						requestAnimationFrame(() => focusById(id));
+					} else {
+						App.UI.updateCenterCTA();
+					}
+				}, 120);
+			}
+
+			return {
+				attach,
+				applyFilter,
+				fitAll,
+				onResize,
+				clearFocus,
+				recenter,
+				focusById,
+				adoptNewBasePreservingView
+			};
+		})(App);
+
+		/* =============================================================================
+			7) Flow (sequenced activate/deactivate)
+		============================================================================= */
+		App.Flow = (function (app) {
+			const q = [];
+			let running = false;
+
+			function lockInput(v) {
+				app.state.lockInput = !!v;
+			}
+
+			/**
+			 * Wait for the dock AND the workspace padding transition to finish,
+			 * so stage size is final before we measure/zoom to a hex.
+			 */
+			async function waitDockAndWorkspace() {
+				const waits = [];
+				// Dock slide
+				waits.push(waitTransition(app.el.dock, Config.dockTransitionMs + 80));
+				// Workspace padding animates when the dock opens/closes
+				if (app.el.workspace) {
+					waits.push(waitTransition(app.el.workspace, Config.dockTransitionMs + 120));
+				}
+				await Promise.all(waits);
+				await Util.nextFrame(2); // ensure layout has settled
+			}
+
+			async function ensureStableStageForFocus() {
+				// Always go through the same flow so both cases behave identically.
+				const wasVisible = !App.UI.isDockCollapsed();
+				if (wasVisible) App.UI.collapseDock('auto');
+
+				// Wait for dock & workspace to fully settle (even if it was already hidden,
+				// this ensures we don’t race any in-flight transitions).
+				await waitDockAndWorkspace();
+
+				// Recompute baseScale/min/max against the *final* stage rect.
+				app.Interaction.adoptNewBasePreservingView();
+
+				// Give ResizeObserver/visualViewport a moment to flush and the DOM to settle.
+				await Util.nextFrame(2);
+			}
+
+			function waitTransition(el, maxMs = 350) {
+				return new Promise((resolve) => {
+					let done = false;
+
+					const timer = setTimeout(() => {
+						if (done) return;
+						done = true;
+						resolve();
+					}, Math.max(0, maxMs));
+
+					const onEnd = (e) => {
+						if (e.target !== el) return;
+						el.removeEventListener('transitionend', onEnd);
+
+						if (done) return;
+						done = true;
+						clearTimeout(timer);
+						resolve();
+					};
+
+					el.addEventListener('transitionend', onEnd, { once: true });
+				});
+			}
+
+			function enqueue(fn) {
+				return new Promise((resolve, reject) => {
+					q.push({ fn, resolve, reject });
+					drain();
+				});
+			}
+
+			async function drain() {
+				if (running) return;
+				const item = q.shift();
+				if (!item) return;
+
+				running = true;
+				lockInput(true);
+
+				try {
+					const r = await item.fn();
+					item.resolve(r);
+				} catch (e) {
+					console.error(e);
+					item.reject(e);
+				} finally {
+					lockInput(false);
+					running = false;
+					if (q.length) drain();
+				}
+			}
+
+			async function initialFit() {
+				app.Interaction?.applyFilter?.();
+				app.Interaction?.fitAll?.();
+				await Util.nextFrame(2);
+			}
+
+			async function activate(id) {
+				return enqueue(async () => {
+					await ensureStableStageForFocus();
+					app.Interaction.focusById(id);
+					await waitTransition(app.el.layer, Config.layerTransitionMs + 60);
+				});
+			}
+
+
+			async function deactivate(reason = '') {
+				return enqueue(async () => {
+					const menuVisible = !App.UI.isDockCollapsed();
+					const wasAutoCollapsed = !!app.state.menu.autoCollapsed;
+
+					App.UI.hideInfo();
+					app.Interaction.clearFocus();
+
+					app.Interaction.recenter({ withInfoBias: false });
+					await waitTransition(app.el.layer, Config.layerTransitionMs + 60);
+					await Util.wait(Config.menuHexDelayMs);
+
+					if (!menuVisible && wasAutoCollapsed && !app.state.menu.userCollapsed) {
+						App.UI.revealDock('auto');
+						await waitTransition(app.el.dock, Config.dockTransitionMs + 80);
+					}
+				});
+			}
+
+			return {
+				initialFit,
+				activate,
+				deactivate,
+				isBusy: () => running
+			};
+		})(App);
+
+		/* =============================================================================
+			7.5) Actions — global reset from title
+		============================================================================= */
+		App.Actions = (function (app) {
+			async function resetAll(source = 'title') {
+				if (app.state.focusedId) {
+					await App.Flow.deactivate('resetAll');
+				} else {
+					App.UI.hideInfo();
+				}
+
+				app.state.selection.theme = null;
+				app.state.selection.hiddenIds.clear();
+
+				const noneRadio = document.querySelector('#themeGroup input[name="theme"][value=""]');
+				if (noneRadio) noneRadio.checked = true;
+
+				document.querySelectorAll('#courseGroup .check input[type="checkbox"]').forEach(cb => {
+					cb.checked = true;
+				});
+
+				App.Interaction.applyFilter();
+				App.Interaction.fitAll();
+				App.UI.revealDock('user');
+				App.UI.updateCenterCTA();
+			}
+
+			function bindTitle() {
+				const t = document.querySelector('.app-title');
+				if (!t) return;
+
+				t.addEventListener('click', () => { if (!App.Flow.isBusy()) resetAll('click'); });
+				t.addEventListener('keydown', (e) => {
+					if ((e.key === 'Enter' || e.key === ' ') && !App.Flow.isBusy()) {
+						e.preventDefault();
+						resetAll('key');
+					}
+				});
+			}
+
+			return { resetAll, bindTitle };
+		})(App);
+
+		/* =============================================================================
+			8) Export
+		============================================================================= */
+		App.Export = (function () {
+			function run() {
+				const after = () => window.removeEventListener('afterprint', after);
+				window.addEventListener('afterprint', after);
+
+				setTimeout(() => {
+					try { window.print(); } catch (_) { after(); }
+				}, 20);
+			}
+
+			return { run };
+		})();
+
+		/* =============================================================================
+			9) Tips (driven by tipsData JSON; step count x/total; preserves order)
+		============================================================================= */
+		App.Tips = (function (app) {
+			const LS_HIDE = 'cis.tips.hidden';
+			const LS_SEEN_FOCUS = 'cis.tips.seen.focus';
+			const LS_SEEN_FILTER = 'cis.tips.seen.filter';
+
+			function loadTips() {
+				try {
+					const raw = document.getElementById('tipsData')?.textContent || '[]';
+					const parsed = JSON.parse(raw);
+					const arr = Array.isArray(parsed) ? parsed : [];
+					return arr.map((it) => {
+						if (typeof it === 'string') return { t: it };
+						if (it && typeof it === 'object') {
+							if (typeof it.t === 'string') return { t: it.t };
+							if (typeof it.text === 'string') return { t: it.text };
+						}
+						return null;
+					}).filter(Boolean);
+				} catch (_) {
+					return [];
+				}
+			}
+			let STEPS = null;
+			function getSteps() {
+				if (!STEPS || !STEPS.length) STEPS = loadTips();
+				return STEPS;
+			}
+
+			let cur = 0;
+
+			function applyStep() {
+				const steps = getSteps();
+				const total = steps.length;
+				if (!app.el.tour) return;
+				if (!total) { close(); return; }
+
+				app.el.tourStep.textContent = `${cur + 1}/${total}`;
+				app.el.tourText.textContent = steps[cur].t;
+				app.el.tour.classList.add('is-open');
+
+				// Button enable/disable
+				app.el.tourPrevBtn.disabled = (cur === 0);
+				app.el.tourNextBtn.disabled = (cur === total - 1);
+				
+				// Button styles per step:
+				// 1/3: Back=btn, Next=btn--ghost, Close=btn
+				// 2/3: Back=btn--ghost, Next=btn--ghost, Close=btn
+				// 3/3: Back=btn--ghost, Next=btn, Close=btn--ghost
+				const backBtn  = app.el.tourPrevBtn;
+				const nextBtn  = app.el.tourNextBtn;
+				const closeBtn = app.el.tourCloseBtn;
+				
+				// reset to base
+				backBtn.className  = 'btn';
+				nextBtn.className  = 'btn';
+				
+				if (cur === 0) {
+					nextBtn.classList.add('btn--ghost');
+				} else if (cur === 1) {
+					backBtn.classList.add('btn--ghost');
+					nextBtn.classList.add('btn--ghost');
+				} else {
+					backBtn.classList.add('btn--ghost');
+				}
+			}
+
+			function close() {
+				if (!app.el.tour) return;
+				app.el.tour.classList.remove('is-open');
+			}
+
+			function showIfAllowed() {
+				try {
+					if (localStorage.getItem(LS_HIDE) === '1') return;
+				} catch (_) {}
+
+				const steps = getSteps();
+				if (!steps.length) return;
+				cur = 0;
+				applyStep();
+			}
+
+			function toast(msg, ttl = 3800) {
+				const t = app.el.toast;
+				if (!t) return;
+
+				t.textContent = msg;
+				t.classList.add('is-open');
+				setTimeout(() => t.classList.remove('is-open'), ttl);
+			}
+
+			function tipOnFocus() {
+				try {
+					if (localStorage.getItem(LS_SEEN_FOCUS) === '1') return;
+					localStorage.setItem(LS_SEEN_FOCUS, '1');
+				} catch (_) {}
+
+				toast('Details appear in the panel at the bottom.', 4200);
+			}
+
+			function tipOnFilter() {
+				try {
+					if (localStorage.getItem(LS_SEEN_FILTER) === '1') return;
+					localStorage.setItem(LS_SEEN_FILTER, '1');
+				} catch (_) {}
+
+				toast('Tip: click “No theme” to show all courses again.', 4200);
+			}
+
+			function bind() {
+				if (!app.el.tour) return;
+
+				app.el.tourPrevBtn.addEventListener('click', () => { if (cur > 0) { cur--; applyStep(); } });
+				app.el.tourNextBtn.addEventListener('click', () => {
+					const total = STEPS.length;
+					if (cur < total - 1) { cur++; applyStep(); }
+				});
+				app.el.tourCloseBtn.addEventListener('click', close);
+
+				app.el.tourHideBtn.addEventListener('click', () => {
+					try { localStorage.setItem(LS_HIDE, '1'); } catch (_) {}
+					close();
+				});
+
+				// Keep current step but refresh DOM if viewport changes
+				window.addEventListener('resize', () => { if (app.el.tour.classList.contains('is-open')) applyStep(); }, { passive: true });
+			}
+
+			return { bind, showIfAllowed, tipOnFocus, tipOnFilter };
+		})(App);
+
+		/* =============================================================================
+			10) Bootstrap
+		============================================================================= */
+
+		/* Force Tracks view at the earliest possible moments (fresh load + BFCache restore).
+		This prevents browser state restoration from re-checking the “Blocks” radio and
+		leaving the UI in blocks mode. */
+		function forceTracksOnBoot() {
+			try {
+				document.body.setAttribute('data-view-mode', 'tracks');
+				const tracks = document.getElementById('modeTracks');
+				const blocks = document.getElementById('modeBlocks');
+				if (tracks) tracks.checked = true;
+				if (blocks) blocks.checked = false;
+				const boxTracks = document.getElementById('legendTracks');
+				const boxBlocks = document.getElementById('legendBlocks');
+				if (boxTracks) boxTracks.hidden = false;
+				if (boxBlocks) boxBlocks.hidden = true;
+			} catch(_) {}
+		}
+		
+		/* Handle page restore from the back/forward cache (“soft refresh”). */
+		window.addEventListener('pageshow', () => {
+			forceTracksOnBoot();
+		}, { passive: true });
+
+		async function start() {
+			forceTracksOnBoot();
+			App.Domain.load();
+			App.Themes.load();
+
+			App.UI.bind();
+
+			App.state.selection = {
+				theme: Config.defaultTheme,
+				hiddenIds: new Set()
+			};
+
+			App.UI.renderThemeFilters(App.Themes.all());
+			App.UI.renderCourseSelector(App.Domain.all());
+			App.UI.renderHexGrid(App.Domain.all());
+			try { document.getElementById('courseCount').textContent = `(${App.Domain.all().length} / ${App.Domain.all().length})`; } catch(_) {}
+
+			App.UI.initCollapsiblesInitialState();
+
+			App.Interaction.attach();
+
+			App.Tips.bind();
+			App.Tips.showIfAllowed();
+			App.Actions.bindTitle();
+
+			await App.Flow.initialFit();
+			App.UI.playIntro();
+
+			window.addEventListener('resize', App.Interaction.onResize, { passive: true });
+
+			if ('visualViewport' in window && window.visualViewport) {
+				window.visualViewport.addEventListener('resize', App.Interaction.onResize, { passive: true });
+			}
+
+			try {
+				const ro = new ResizeObserver(() => App.Interaction.onResize());
+				ro.observe(document.getElementById('stage'));
+				App._resizeObserver = ro;
+			} catch (_) {}
+
+			requestAnimationFrame(() => {
+				try {
+					App.UI.sizeThemeList();
+					App.UI.sizeCourseList();
+					App.UI.updateWorkspaceReserve();
+				} catch (_) {}
+			});
+		}
+
+		window.addEventListener('DOMContentLoaded', start, { once: true });
+	</script>
+
+	<!-- ============================================================================
+		DATA
+		============================================================================ -->
+	<script id="themesData" type="application/json">
+	[
+		{ "id": "Tech",      "label": "Tech",      "order": 1 },
+		{ "id": "Marketing", "label": "Marketing", "order": 2 },
+		{ "id": "Brain",     "label": "Brain",     "order": 3 }
+	]
+	</script>
+
+	<!-- ============================================================================
+		OVERVIEW DATA (client-editable)
+		----------------------------------------------------------------------------
+		See inline documentation in the JS above for syntax and behavior.
+		============================================================================ -->
+	<script id="overviewData" type="application/json">
+	{
+		"19": "3-4-{5}-4-3",
+		"20": "3-2-3-[4]-3-2-3",
+		"21": "2-3-4-{3}-4-3-2",
+		"22": "3-4-3-[2]-3-4-3",
+		"23": "2-3-4-{5}-4-3-2",
+		"24": "3-4-3-[4]-3-4-3",
+		"25": "4-3-4-{3}-4-3-4",
+		"26": "3-4-5^b-[4]-5^b-4-3",
+		"27": "4-3-4-{5}-4-3-4",
+		"28": "3-4-5-[4]-5-4-3",
+		"29": "4-5-4-{3}-4-5-4",
+		"30": "5^b-4-5-[4]-5-4-5^t",
+		"31": "4-5-4-{5}-4-5-4"
+	}
+	</script>
+
+	<!-- ============================================================================
+		TIPS DATA (order defines steps; step counter uses list length)
+		============================================================================ -->
+	<script id="tipsData" type="application/json">
+	[
+		"At CIS, you can build your own profile. Our tracks and themes can help you out. Check out which courses fall under each theme. Click on each course to find out more.",
+		"Controls: use “Select a theme” to highlight courses within a theme. Use “Select courses” to show or hide individual courses. The legend shows which track(s) each course belongs to.",
+		"Pan & zoom: drag to pan and use mouse wheel/trackpad or pinch to zoom. Click or tap a course to open details; click/tap it again (or press Esc / tap empty space) to close."
+	]
+	</script>
+
+	<script id="coursesData" type="application/json">
+	[
+		{
+			"title": "Negotiation Strategies",
+			"tracks": ["BDM", "CC"],
+			"themes": ["Marketing", "Brain"],
+			"code": "880460-M-6",
+			"block": ["2"],
+			"description": "The course will discuss the fundamentals of conflict management, negotiations, the concepts of interdependence, conflict and the creation of value, which will be viewed from the communication angle. Different strategies of negotiation, e.g. distributive and integrative bargaining, will be dealt with first. Next, the impact of cognitive, perceptual and relational variables, as well as the role of justice and ethics will be discussed within the framework of the main strategies. Social psychological factors, such as power differences, gender and culture will be studied. We will additionally focus on how mediated communication might affect the success of negotiations. Details for each of these aspects will be analyzed in the context of relevant empirical studies, discussed in the scientific articles that will be read and analyzed in addition to the book."
+		},
+		{
+			"title": "Roles in Networked Organizations",
+			"tracks": ["BDM"],
+			"themes": ["Brain"],
+			"code": "880100-M-6",
+			"block": ["3"],
+			"description": "According to Shakespeare “All the world's a stage, and all the men and women merely players”. This may be particularly true for workplaces in which employees play their own roles and thereby contribute to organizational performance, group cohesion, and their own well-being. The dramaturgical metaphor is very appropriate to study organizations and organizational communication. In fact, work is often characterized as a performance, in which employees do their best to uphold certain images through their behavior and communication. Employee communication is often aimed at making a good impression on supervisors, clients, and co-workers. At the same time, employees are brand ambassadors and do their best to uphold certain corporate images, or defend corporate reputations in times of crises. Organizational communication enables role-playing, but communication is also constrained by roles. In this course, we will explore theories and empirical studies about role-playing at work that help us understand which (communication-) roles employees play, why they do so, how they do so, and how it affects their well-being, their performance, and the everyday performance of their organization. On the one hand, role-playing makes behavior predictable, and it smoothens collaboration, but on the other hand, roles cause problems in organizations (e.g., confusion, stress, and burnout) as role expectations are often ambiguous or elevated to unrealistic levels."
+		},
+		{
+			"title": "Interpersonal Communication",
+			"tracks": ["BDM", "CC"],
+			"themes": ["Brain"],
+			"code": "880104-M-6",
+			"block": ["2"],
+			"description": "In this course you will gain knowledge about what makes interpersonal communication successful. We will focus on different communicative contexts, such as relationship formation and maintenance, leadership, health communication, negotiation, and parenting. A major focus will be on the effects of (unconscious, cognitive) psychological biases and the role of different types of media on whether and how people communicate successfully."
+		},
+		{
+			"title": "Resistance and Persuasion",
+			"tracks": ["BDM", "CC"],
+			"themes": ["Marketing", "Brain"],
+			"code": "880080-M-6",
+			"block": ["3"],
+			"description": "During this course you are provided with an in-depth overview of academic research in the fields of marketing communication and advertising, health communication, consumer behavior, social psychology, and media psychology studying the process of resistance to persuasion and become acquainted with the relevant concepts in those fields. Specifically, we discuss several theories on the different psychological processes that may explain a resistance response (i.e., psychological reactance, self-threat, and the activation of persuasion knowledge or advertising literacy), different strategies that people adopt to guard themselves against persuasive influences (e.g., counter arguing, source derogation, attitude bolstering), and strategies that influence professionals may use to overcome resistance (e.g., narrative persuasion, self-persuasion, and emotional appeals). In addition, we discuss tools that are specifically designed to help message receivers recognize persuasion attempts, which may foster resistance: sponsorship disclosures and inoculation against misinformation."
+		},
+		{
+			"title": "Social Media Marketing",
+			"tracks": ["BDM"],
+			"themes": ["Marketing"],
+			"code": "880478-M-6",
+			"block": ["4"],
+			"description": "During this course, we will seek the answer to this question. We will examine the current state of affairs in scientific research regarding social media marketing. What scientific knowledge is available? Of course, we will also look at the many research questions that remain. Some of these research questions will be investigated by the students themselves in this course. This way, we can expand the scientific knowledge in the field of SMM. Finally, there will also be one or more guest speakers who currently work in social media marketing and who will share their practical knowledge with the students."
+		},
+		{
+			"title": "Non-Verbal Communication",
+			"tracks": ["CC"],
+			"themes": ["Brain"],
+			"code": "880206-M-6",
+			"block": ["4"],
+			"description": "In the course, we discuss the different forms of non-verbal communication and how these can be analyzed. Furthermore, we focus on the possible functions (both intended and unintended) of these behaviors, for instance to express emotions, whether someone is truthful or not, to partition a sentence or regulate turn taking. We will also show how people can exploit such features, for instance to compensate for language difficulties, but also for showing dominance."
+		},
+		{
+			"title": "Webcare & Conversational AI",
+			"tracks": ["BDM", "CC"],
+			"themes": ["Tech", "Marketing"],
+			"code": "880085-M-6",
+			"block": ["1"],
+			"description": "The course consists of video lectures and seminars. In the video lectures, we will dive deeper into the main topics related to webcare and (conversational) AI – related to the readings of that week. To stimulate elaboration on that week’s topic, per video lecture students will hand in their answers to weekly questions (formative assessment). These weekly questions also prepare them for the exam at the end of the elective. The on-campus seminars are highly interactive and engaging. Each week, a student team will prepare an in-class activity that matches that week’s topic. Next to that, the weekly questions will be discussed as well as relevant theories and cases from practice. The seminars also allow students to work in teams on their group assignment."
+		},
+		{
+			"title": "Topics in Communication & Digit. Science",
+			"tracks": ["BDM", "CC", "NMD"],
+			"themes": [],
+			"code": "880101-M-6",
+			"block": ["4"],
+			"description": "Topics in Communication and Digital Science is a small-scale course (max. 16 students per theme) in which students are assigned an active role and have a say in what is discussed during the lectures. This course is therefore particularly suitable for CIS students who enjoy active, in-depth engagement with the materials, and Research Master's students. In Topics, students build scientific expertise and skills related to one specific societally relevant theme. Students will develop their oral presentation skills by creating a student-led seminar, and practice writing for a non-scientific audience. When you enroll in the Topics course via Osiris, you will be asked to select one of the four themes below. The theme you select, will be the overarching topic you will focus on for the full period of 7 weeks; you can thus not switch between the three topics during the course."
+		},
+		{
+			"title": "Social Media: Risks & Opportunities",
+			"tracks": ["BDM", "NMD"],
+			"themes": ["Tech", "Brain"],
+			"code": "880646-M-6",
+			"block": ["2"],
+			"description": "In this course we will discuss our daily social media use from two perspectives: the opportunities social media offer, but also the risks that are related to social media use for individual users. Especially the risks often receive large news coverage in (inter)national press, whereas the opportunities receive less to no media attention. This can lead to feelings of concerns about the use of social media among, for instance, individual users, parents, teachers, practitioners and policy makers. Communication scholars can play a crucial role in our society by providing their expert opinion. They can guide individual users, parents, teachers, practitioners, policy makers and journalists in forming a nuanced opinion about the potential risks and opportunities of social media."
+		},
+		{
+			"title": "Multimodality & Visual Language",
+			"tracks": ["CC"],
+			"themes": ["Tech", "Brain"],
+			"code": "880107-M-6",
+			"block": ["2"],
+			"description": "This course will primarily focus on theoretical and applied research on multimodal messages. We analyze and design various types of multimodal messages and expressions according to models and theories of language, graphics, and multimodality. As many of these theories are still in development, students will be challenged to both learn and contribute to theory-building and application."
+		},
+		{
+			"title": "Data & (Mis)information",
+			"tracks": ["BDM", "CC", "NMD"],
+			"themes": ["Tech", "Brain"],
+			"code": "880003-M-6",
+			"block": ["1"],
+			"description": "-"
+		},
+		{
+			"title": "Risk Communication",
+			"tracks": ["BDM", "CC", "NMD"],
+			"themes": ["Marketing", "Brain"],
+			"code": "880666-M-6",
+			"block": ["4"],
+			"description": "In this course, you will explore key theories and concepts in the field of risk and uncertainty communication. Topics include the psychology of risk perception, strategic and media risk communication, formats for communicating probability, the impact of uncertainty on trust and decision-making, and the role of individual differences such as numeracy, graph literacy, and cultural orientation. You will also learn to critically assess real-world risk communication efforts in areas like health, the environment, and technology, and apply practical, evidence-based strategies to avoid common pitfalls and enhance the effectiveness of risk communications."
+		},
+		{
+			"title": "Digital Health Communication",
+			"tracks": ["BDM", "CC", "NMD"],
+			"themes": ["Tech", "Brain"],
+			"code": "800872-M-6",
+			"block": ["3"],
+			"description": "In this course, you will learn about the main theories, technologies, and methods that are relevant for design, adoption, and effects of (persuasive) digital health communication. Topics that will be discussed include characteristics of users, affordances and design of technology, and the effects of digital technologies on (health) outcomes. Topics will be illustrated with recent examples of implementations of health communication technology, such as games, mobile health apps, and virtual reality applications. In the assignments of this course, you will apply the knowledge to design and evaluate a theory- and evidence-based digital health application."
+		},
+		{
+			"title": "Digital Inequality",
+			"tracks": ["BDM", "NMD"],
+			"themes": ["Tech"],
+			"code": "880103-M-6",
+			"block": ["3"],
+			"description": "There is a lot of hope placed in digital technologies to democratize participation in the economy, politics, education, and culture. But how equal is our digital society? What shapes who is seen and who benefits, and who is left out or penalized? In this course, we examine the differences that have emerged between groups in terms of who benefits (and who does not) from the rise of smartphones, social media, big data, and other digital innovations in the 21st century. We discuss the historical context for digital inequality and some theoretical frameworks, before turning to recent research on topics such as health, education, politics, AI, gig work, and political participation. Note: We may adapt these topics to stay relevant to social and technological changes. We will look at how inequalities emerge around broad differences in society such as gender, age, and income, and explore case studies of particular populations who are experiencing and adapting to digital changes. We will also look at macro/structural issues related to digital inequalities at a global scale, such as data colonialism and dominance over internet/platform governance."
+		},
+		{
+			"title": "Taalkennis",
+			"tracks": ["CC"],
+			"themes": ["Brain"],
+			"code": "-",
+			"block": ["-"],
+			"description": "-"
+		},
+		{
+			"title": "Understanding Large Language Models",
+			"tracks": ["CC", "NMD"],
+			"themes": ["Tech", "Brain"],
+			"code": "880643-M-6",
+			"block": ["1"],
+			"description": "Throughout the course, students will explore the architecture behind LLMs and compare them to cognitive models of human language processing. On the one hand, understanding human cognition is essential for making usable language technology. One the other hand, LLMs also provide new tools, methods, and frameworks that human cognition could not offer. In addition, LLMs may by seeming human, while working in a non-human way, posit new risks to human society."
+		},
+		{
+			"title": "Climate Communication",
+			"tracks": ["BDM", "CC", "NMD"],
+			"themes": ["Marketing", "Brain"],
+			"code": "880102-M-6",
+			"block": ["2"],
+			"description": "Climate change is one of the most pressing issues of our time. In this course, we critically examine the dominant and persisting narratives that currently shape climate communication, such as the anthropocene perspective (‘humans are central’), the capitalist perspective, and the apocalyptic perspective. While challenging, students taking this course are invited to break out of existing structures and develop well-informed, new narratives and perspectives: if audiences can imagine better what a sustainable future may look like, it could make climate change communication more successful."
+		},
+		{
+			"title": "Digital Food Marketing",
+			"tracks": ["BDM", "NMD"],
+			"themes": ["Marketing", "Tech"],
+			"code": "880099-M-6",
+			"block": ["1"],
+			"description": "The course consists of two main parts; (1) a theoretical part with lectures and a written exam, and (2) an empirical part with working groups, final report and presentation of the results. During the lectures, different forms of food marketing techniques and their effectiveness will be discussed, theoretical models explaining the psychology of food marketing and consumption and eating behavior will be presented, and methodologies to test and analyze food marketing techniques will be explained. During most lectures, there will also be room to bring the theory into practice, as students will conduct an empirical study in close collaboration with a company/organization, supervised by one of the teachers."
+		},
+		{
+			"title": "Emerging Technologies for Learning",
+			"tracks": ["CC", "NMD"],
+			"themes": ["Tech", "Brain"],
+			"code": "880016-M-6",
+			"block": ["3"],
+			"description": "The goal of the course is to provide you with a thorough understanding of the main concepts involved in learning, and how emerging technologies can be leveraged to support these concepts. We will explore how we could potentially benefit from these technologies in education, but also examine potential barriers or pitfalls that could stand in the way of a successful implementation. The content covered in this course is relevant for students who are interested in learning processes and how emerging technologies can support these, in the field of formal education as well as other domains where learning is important."
+		},
+		{
+			"title": "The Human Mind in the Digital World",
+			"tracks": ["CC", "NMD"],
+			"themes": ["Brain", "Tech"],
+			"code": "880672-M-6",
+			"block": ["1"],
+			"description": "The main goal of this course on ‘the human mind in the digital world’ is to explore and understand a) how insights about the workings of the human mind are (and can be) exploited in the design of the digital world, and b) how operating in the digital world affects – in both immediate and a more sustained manner – the workings of the human mind. We will be drawing from the fields of cognitive psychology, cognitive neuroscience, media psychology, and communication science, in order to learn about the interplay between human cognition and digital technology."
+		},
+		{
+			"title": "Responsible UX Design",
+			"tracks": ["NMD"],
+			"themes": ["Tech", "Marketing", "Brain"],
+			"code": "880671-M-6",
+			"block": ["2"],
+			"description": "In this course, you will learn how to integrate core ethical principles and theories in the responsible design of new media products, while exploring what happens when such concerns are neglected, or even flouted. You will discuss and interrogate ethical concerns and value clashes as they relate to topical issues in society and specific design practices, all the while developing and reifying your own ethical positions. You will also design and critique your own speculative new media product as a way of exposing and reflecting on problematic creations and designs that cause harm. The goal of this course is not to dictate what you should think or believe with respect to the design of responsible interactive systems, but rather to help you define your own ethical positions and processes for making responsible design decisions."
+		},
+		{
+			"title": "Interactive Storytelling",
+			"tracks": ["CC", "NMD"],
+			"themes": ["Marketing", "Tech"],
+			"code": "822034-M-6",
+			"block": ["4"],
+			"description": "In this course, you become acquainted with (interactive) narratives, stories and storytelling and with the experience and effects of (interactive) narratives. You explore interactive storytelling in, for example, journalism, health communication and education and discuss how interactivity can be used in storytelling in a meaningful, responsible way. You do so through exploring scientific literature but also through analyzing a professional strategic interactive narrative and creating and publishing your own interactive digital narrative about a societally relevant topic."
+		},
+		{
+			"title": "Psychology of Creativity",
+			"tracks": ["NMD"],
+			"themes": ["Brain", "Tech"],
+			"code": "880013-M-6",
+			"block": ["4"],
+			"description": "Creativity is essential in today’s fast-paced and innovation-driven world, whether in designing products, solving complex problems, or developing persuasive campaigns. But what psychological processes underlie the generation of truly original and effective ideas? In this course, we explore the psychology of creativity: how people generate ideas, solutions, and products that are novel yet also appropriate. Drawing on current research in cognitive, motivation, emotion, and social psychology, we will examine the mechanisms that support, hinder, or enhance creative thinking. The course also engages with the \"third wave\" of creativity research, which investigates how digital technologies affect human creativity."
+		}
+	]
+	</script>
+	</body>
+</html>
