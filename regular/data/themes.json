@@ -1,0 +1,5 @@
+[
+    { "id": "Tech",      "label": "Tech",      "order": 1 },
+    { "id": "Marketing", "label": "Marketing", "order": 2 },
+    { "id": "Brain",     "label": "Brain",     "order": 3 }
+]
