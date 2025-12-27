@@ -120,6 +120,7 @@ body[data-ui-theme="dark"] {
 .fill-nmd { fill: var(--track-nmd); }
 .fill-extra { fill: var(--track-extra); }
 .fill-base { fill: var(--fill-base); }
+.fill-blue { fill: var(--accent); }
 
 /* =========================================================================
 1) BASE & LAYOUT
@@ -568,6 +569,29 @@ body.dock-collapsed { --dock-shift: calc(100% - var(--dock-tab)); }
 /* =========================================================================
 6) INTRO, MOTION, PRINT/EXPORT
 ========================================================================= */
+.intro-logo {
+    position: fixed; inset: 0;
+    display: grid; place-items: center;
+    z-index: 20010;
+    pointer-events: none;
+    opacity: 1;
+    transition: opacity var(--logo-fade-ms, 400ms) ease;
+}
+.intro-logo.is-hidden { opacity: 0; }
+.intro-logo__circle {
+    width: 33.33vmin; height: 33.33vmin;
+    background: var(--white);
+    border-radius: 50%;
+    display: grid; place-items: center;
+    box-shadow: var(--shadow-2);
+    overflow: hidden;
+}
+.intro-logo__circle svg,
+.intro-logo__svg {
+    display: block;
+    width: 66%; height: auto;
+}	
+
 .cis-intro {
     position: fixed; inset: 0; z-index: 20000; pointer-events: none;
     background: radial-gradient(circle at 50% 50%, transparent var(--reveal, 0vmax), var(--accent) calc(var(--reveal, 0vmax) + 1px));

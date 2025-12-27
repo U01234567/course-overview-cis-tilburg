@@ -22,6 +22,7 @@ const Config = {
     dockTransitionMs: 280,
     menuHexDelayMs: 200,
     layerTransitionMs: 280,
+    introMinDelayMs: 400,
 
     /* Dock swipe threshold (px) */
     dockSwipePx: 56
@@ -1327,9 +1328,23 @@ App.UI = (function (app) {
     }
 
     /* ----- Intro -------------------------------------------------------------- */
-    function playIntro() {
+    async function playIntro() {
         const intro = document.getElementById('intro');
         if (!intro) return;
+        if (App._introStarted) return;
+        App._introStarted = true;
+        
+        // 1) Wait the minimum delay first
+        await Util.wait(Config.introMinDelayMs);
+        // 2) Then wait for full load (images, fonts, etc.)
+        if (document.readyState !== 'complete') {
+            await new Promise((resolve) => window.addEventListener('load', resolve, { once: true }));
+        }
+        
+        const logo = document.getElementById('introLogo');
+        if (logo) {
+            logo.classList.add('is-hidden');
+        }
         
         const kill = () => intro.remove();
         
