@@ -80,7 +80,7 @@ Edit the JSON files under `regular/data/`:
 
 Minimal example for `courses.json`:
 
-```
+```json
 [
     {
         "title": "Data Visualisation",
@@ -117,10 +117,27 @@ To change positions, simply move course objects up/down in `courses.json`. You d
 
 ```json
 [
-  { "title": "A – first in list",  "tracks": ["BDM"], "block": ["1"], "themes": [] },
-  { "title": "B – second",         "tracks": ["CC"],  "block": ["1"], "themes": [] },
-  { "title": "… more courses …" },
-  { "title": "Z – last in list",   "tracks": ["NMD"], "block": ["4"], "themes": [] }
+  { 
+    "title": "A – first in list",  
+    "tracks": ["BDM"], 
+    "block": ["1"], 
+    "themes": [] 
+  },
+  { 
+    "title": "B – second",
+    "tracks": ["CC"],
+    "block": ["1"],
+    "themes": [] 
+  },
+  { 
+    "title": "… more courses …" 
+  },
+  { 
+    "title": "Z – last in list",
+    "tracks": ["NMD"],
+    "block": ["4"],
+    "themes": [] 
+  }
 ]
 ```
 
@@ -139,17 +156,29 @@ Use a short, single-word `id` (no spaces) as the internal identifier, and put th
 
 Example: If your courses can be divided into the themes "Data Visualisation", "Human–AI Interaction", and "Language Technology", `themes.json` (or `themesData` at the bottom of the standalone version) should look like this:
 
-```
+```json
 [
-    {"id":"DataVisualisation","label":"Data Visualisation","order":1},
-    {"id":"HumanAI","label":"Human–AI Interaction","order":2},
-    {"id":"LanguageTechnology","label":"Language Technology","order":3}
+  {
+    "id":"DataVisualisation",
+    "label":"Data Visualisation",
+    "order":1
+  },
+  {
+    "id":"HumanAI",
+    "label":"Human–AI Interaction",
+    "order":2
+  },
+  {
+    "id":"LanguageTechnology",
+    "label":"Language Technology",
+    "order":3
+  }
 ]
 ```
 
 Referencing themes in a course (in `courses.json`):
 
-```
+```json
 {
     "title": "Advanced UX Research",
     "code": "CIS-402",
@@ -174,7 +203,7 @@ Lets you pin a pleasing layout for a given total number of courses. Use compact 
 
 Example:
 
-```
+```json
 {
     "19": "3-4-{5}-4-3",
     "20": "3-4-[6]-4-3",
