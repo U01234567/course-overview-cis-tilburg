@@ -20,18 +20,20 @@ This README and documentation are tailored to non-technical staff (e.g., program
 3. Share `create_cis_overview.html` with students or host it on your server.
 
 **Option B — Regular (more intuitive to edit)**
-Use one of the following from the `regular/` folder:
+
+1. Download the repo as ZIP (Code → Download ZIP).
+2. Option 1: Create local server via terminal:
 
 ```
 cd regular
 python -m http.server 5500
 ```
-Then open [http://localhost:5500/](http://localhost:5500/) in your browser.
+Then open [http://localhost:5500/](http://localhost:5500/) in your browser. Users should automatically arrive at `index.html`.
 
 
-or use VS Code’s “Live Server” to open `regular/index.html`.
+3. Option 2: Use VS Code’s “Live Server” to open `regular/index.html`.
 
-or directly upload all files (in the same folder structure) to your own website. Users should automatically arrive at `index.html`.
+4. Option 3: directly upload all files (in the same folder structure) to your own website. Users should automatically arrive at `index.html`.
 
 Why a server? Browsers block `fetch()` for `file://` URLs. Serving over `http://` allows the app to load `data/*.json`.
 
