@@ -621,7 +621,18 @@ body.dock-collapsed { --dock-shift: calc(100% - var(--dock-tab)); }
 .intro-logo__svg {
     display: block;
     width: 66%; height: auto;
-}	
+}
+.intro-logo__stack {
+    display: grid;
+    justify-items: center;
+    row-gap: .9rem;
+}
+.intro-logo__note {
+    margin: 0;
+    font-size: clamp(.9rem, 2.2vmin, 1.1rem);
+    color: var(--accent-contrast);
+    text-align: center;
+}
 
 .cis-intro {
     position: fixed; inset: 0; z-index: 20000; pointer-events: none;
