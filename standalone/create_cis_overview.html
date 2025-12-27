@@ -156,9 +156,10 @@
 
 		.workspace {
 			position: relative;
-			min-height: calc(100dvh - 1rem);
-			min-height: calc(100svh - 1rem);
 			min-height: calc(100vh  - 1rem);
+			min-height: calc(100svh - 1rem);
+			min-height: calc(100lvh - 1rem);
+			min-height: calc(100dvh - 1rem);
 			margin: .5rem;
 			background: var(--surface);
 			border-radius: var(--radius);
@@ -245,6 +246,7 @@
 			content: ""; position: absolute; top: 0; bottom: 0; left: 50%;
 			transform: translateX(-50%); height: 100%; width: auto;
 			aspect-ratio: 114.68 / 99.31;
+			-webkit-clip-path: polygon(25% 0,75% 0,100% 50%,75% 100%,25% 100%,0 50%);
 			clip-path: polygon(25% 0,75% 0,100% 50%,75% 100%,25% 100%,0 50%);
 		}
 		.hex::before { background: var(--hex-bg); }
@@ -264,8 +266,34 @@
 			transform: translateX(-50%); height: 100%; width: auto;
 			aspect-ratio: 114.68 / 99.31; z-index: 3; pointer-events: auto;
 			background: transparent; cursor: grab; --hit-inset: 0%;
+			-webkit-clip-path: polygon(calc(25% + var(--hit-inset)) 0%, calc(75% - var(--hit-inset)) 0%, 100% 50%, calc(75% - var(--hit-inset)) 100%, calc(25% + var(--hit-inset)) 100%, 0% 50%);
 			clip-path: polygon(calc(25% + var(--hit-inset)) 0%, calc(75% - var(--hit-inset)) 0%, 100% 50%, calc(75% - var(--hit-inset)) 100%, calc(25% + var(--hit-inset)) 100%, 0% 50%);
 			font-size: 0; line-height: 0;
+		}
+		@supports not (clip-path: polygon(0 0)) {
+			.hex::before,
+			.hex::after,
+			.hex__hit {
+				-webkit-clip-path: none;
+				clip-path: none;
+			}
+			.hex::before,
+			.hex::after {
+				left: 0; right: 0; width: 100%;
+				transform: none;
+			}
+			.hex__hit {
+				left: 0; right: 0; width: 100%;
+				transform: none;
+			}
+		}
+		@supports not (aspect-ratio: 1 / 1) {
+			.hex::before,
+			.hex::after,
+			.hex__hit {
+				left: 0; right: 0; width: 100%;
+				transform: none;
+			}
 		}
 		.is-dragging .hex__hit { cursor: grabbing; }
 
@@ -474,9 +502,13 @@
 
 		@media (orientation: portrait) {
 			.dock {
-				left: max(12px, env(safe-area-inset-left));
-				right: max(12px, env(safe-area-inset-right));
-				bottom: max(12px, env(safe-area-inset-bottom));
+				left: 12px;
+				right: 12px;
+				bottom: 12px;
+				left: max(12px, env(safe-area-inset-left, 0px));
+				right: max(12px, env(safe-area-inset-right, 0px));
+				bottom: max(12px, env(safe-area-inset-bottom, 0px));
+				max-height: 60vh;
 				max-height: min(60dvh, 60vh);
 				flex-direction: column;
 				transform: translateY(var(--dock-shift));
@@ -484,7 +516,8 @@
 		}
 		@media (orientation: landscape) {
 			.dock {
-				right: max(12px, env(safe-area-inset-right));
+				right: 12px;
+				right: max(12px, env(safe-area-inset-right, 0px));
 				top: 50%;
 				width: min(34vw, var(--dock-w));
 				max-height: 86vh;
@@ -1025,6 +1058,36 @@
 					.replace(/'/g, '&#39;');
 			},
 
+			toast(msg, ttl = 6500) {
+				const t = document.getElementById('toast');
+				if (!t) return;
+				try { t._timer && clearTimeout(t._timer); } catch (_) {}
+				t.textContent = String(msg || '');
+				t.classList.add('is-open');
+				try { t._timer = setTimeout(() => t.classList.remove('is-open'), ttl); } catch (_) {}
+			},
+			
+			parseJson(raw, label, fallback) {
+				try {
+					return JSON.parse(raw);
+				} catch (e) {
+					let where = '';
+					const m = /position\s+(\d+)/i.exec(String(e?.message || ''));
+					if (m) {
+						const pos = Math.max(0, Number(m[1]) || 0);
+						const pre = String(raw || '').slice(0, pos);
+						const line = pre.split('\n').length;
+						const lastNL = pre.lastIndexOf('\n');
+						const col = (lastNL >= 0) ? (pos - lastNL) : (pos + 1);
+						where = ` (line ${line}, col ${col})`;
+					}
+					const msg = `[${label}] Invalid JSON${where}. Check for trailing commas or comments.`;
+					console.warn(msg, e);
+					Util.toast(msg, 9000);
+					return fallback;
+				}
+			},
+
 			isLandscape() {
 				return window.matchMedia('(orientation: landscape)').matches;
 			},
@@ -1133,7 +1196,7 @@
 				if (_overviewCache) return _overviewCache;
 				try {
 					const raw = document.getElementById('overviewData')?.textContent || '{}';
-					_overviewCache = JSON.parse(raw) || {};
+					_overviewCache = Util.parseJson(raw, 'overviewData', {}) || {};
 				} catch (e) {
 					console.warn('[overviewData] Failed to parse; falling back to auto layout.', e);
 					_overviewCache = {};
@@ -1492,8 +1555,7 @@
 
 			function load() {
 				const raw = document.getElementById('coursesData')?.textContent || '[]';
-				let list = [];
-				try { list = JSON.parse(raw); } catch (_) { list = []; }
+				const list = Util.parseJson(raw, 'coursesData', []);
 
 				const normalized = [];
 
@@ -1548,8 +1610,7 @@
 
 			function load() {
 				const raw = document.getElementById('themesData')?.textContent || '[]';
-				let parsed = [];
-				try { parsed = JSON.parse(raw); } catch (_) { parsed = []; }
+				const parsed = Util.parseJson(raw, 'themesData', []);
 
 				const byId = new Map();
 
@@ -1970,6 +2031,8 @@
 
 					const use = document.createElementNS(svgNS, 'use');
 					use.setAttribute('href', `#${symbolId}`);
+					// Legacy Safari / embedded WebViews still require xlink:href.
+					use.setAttributeNS('http://www.w3.org/1999/xlink', 'xlink:href', `#${symbolId}`);
 					svg.appendChild(use);
 
 					const label = document.createElement('span');
@@ -2287,7 +2350,10 @@
 				await Util.wait(Config.introMinDelayMs);
 				// 2) Then wait for full load (images, fonts, etc.)
 				if (document.readyState !== 'complete') {
-					await new Promise((resolve) => window.addEventListener('load', resolve, { once: true }));
+					await Promise.race([
+						new Promise((resolve) => window.addEventListener('load', resolve, { once: true })),
+						Util.wait(2000)
+					]);
 				}
 				
 				const logo = document.getElementById('introLogo');
@@ -2295,7 +2361,14 @@
 					logo.classList.add('is-hidden');
 				}
 				
-				const kill = () => intro.remove();
+				let killed = false;
+				let safetyTimer = null;
+				const kill = () => {
+					if (killed) return;
+					killed = true;
+					if (safetyTimer) clearTimeout(safetyTimer);
+					try { intro.remove(); } catch (_) {}
+				};
 				
 				// Option A — mask reveal with JS-driven radius (prevents “growing square”)
 				const supportsMask =
@@ -2315,10 +2388,13 @@
 				const START_DELAY = 120;
 				const start = performance.now() + START_DELAY;
 				const end = start + DURATION;
+				// Safety kill: if masking/RAF behaves unexpectedly on an engine, never leave the overlay up.
+				safetyTimer = setTimeout(kill, DURATION + START_DELAY + 300);
 				// EaseInOutQuad
 				const ease = (t) => (t < 0.5) ? (2 * t * t) : (1 - Math.pow(-2 * t + 2, 2) / 2);
 				
 				function frame(now) {
+					if (killed) return;
 					if (now < start) { requestAnimationFrame(frame); return; }
 					const p = Math.min(1, (now - start) / (end - start));
 					const r = 140 * ease(p); // vmax radius

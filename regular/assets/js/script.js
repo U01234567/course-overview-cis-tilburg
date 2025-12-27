@@ -1021,6 +1021,8 @@ App.UI = (function (app) {
 
             const use = document.createElementNS(svgNS, 'use');
             use.setAttribute('href', `#${symbolId}`);
+            // Legacy Safari / embedded WebViews still require xlink:href.
+            use.setAttributeNS('http://www.w3.org/1999/xlink', 'xlink:href', `#${symbolId}`);
             svg.appendChild(use);
 
             const label = document.createElement('span');
@@ -1338,7 +1340,10 @@ App.UI = (function (app) {
         await Util.wait(Config.introMinDelayMs);
         // 2) Then wait for full load (images, fonts, etc.)
         if (document.readyState !== 'complete') {
-            await new Promise((resolve) => window.addEventListener('load', resolve, { once: true }));
+            await Promise.race([
+                new Promise((resolve) => window.addEventListener('load', resolve, { once: true })),
+                Util.wait(2000)
+            ]);
         }
         
         const logo = document.getElementById('introLogo');
@@ -1346,7 +1351,14 @@ App.UI = (function (app) {
             logo.classList.add('is-hidden');
         }
         
-        const kill = () => intro.remove();
+        let killed = false;
+        let safetyTimer = null;
+        const kill = () => {
+            if (killed) return;
+            killed = true;
+            if (safetyTimer) clearTimeout(safetyTimer);
+            try { intro.remove(); } catch (_) {}
+        };
         
         // Option A — mask reveal with JS-driven radius (prevents “growing square”)
         const supportsMask =
@@ -1366,10 +1378,13 @@ App.UI = (function (app) {
         const START_DELAY = 120;
         const start = performance.now() + START_DELAY;
         const end = start + DURATION;
+        // Safety kill: if masking/RAF behaves unexpectedly on an engine, never leave the overlay up.
+        safetyTimer = setTimeout(kill, DURATION + START_DELAY + 300);
         // EaseInOutQuad
         const ease = (t) => (t < 0.5) ? (2 * t * t) : (1 - Math.pow(-2 * t + 2, 2) / 2);
         
         function frame(now) {
+            if (killed) return;
             if (now < start) { requestAnimationFrame(frame); return; }
             const p = Math.min(1, (now - start) / (end - start));
             const r = 140 * ease(p); // vmax radius

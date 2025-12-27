@@ -147,9 +147,10 @@ body {
 
 .workspace {
     position: relative;
-    min-height: calc(100dvh - 1rem);
-    min-height: calc(100svh - 1rem);
     min-height: calc(100vh  - 1rem);
+    min-height: calc(100svh - 1rem);
+    min-height: calc(100lvh - 1rem);
+    min-height: calc(100dvh - 1rem);
     margin: .5rem;
     background: var(--surface);
     border-radius: var(--radius);
@@ -236,6 +237,7 @@ body.is-moving .layer, .layer.is-measuring { transition: none !important; }
     content: ""; position: absolute; top: 0; bottom: 0; left: 50%;
     transform: translateX(-50%); height: 100%; width: auto;
     aspect-ratio: 114.68 / 99.31;
+    -webkit-clip-path: polygon(25% 0,75% 0,100% 50%,75% 100%,25% 100%,0 50%);
     clip-path: polygon(25% 0,75% 0,100% 50%,75% 100%,25% 100%,0 50%);
 }
 .hex::before { background: var(--hex-bg); }
@@ -251,12 +253,36 @@ body.is-moving .layer, .layer.is-measuring { transition: none !important; }
 }
 
 .hex__hit {
-    position: absolute; top: 0; bottom: 0; left: 50%;
+    content: ""; position: absolute; top: 0; bottom: 0; left: 50%;
     transform: translateX(-50%); height: 100%; width: auto;
-    aspect-ratio: 114.68 / 99.31; z-index: 3; pointer-events: auto;
-    background: transparent; cursor: grab; --hit-inset: 0%;
-    clip-path: polygon(calc(25% + var(--hit-inset)) 0%, calc(75% - var(--hit-inset)) 0%, 100% 50%, calc(75% - var(--hit-inset)) 100%, calc(25% + var(--hit-inset)) 100%, 0% 50%);
-    font-size: 0; line-height: 0;
+    aspect-ratio: 114.68 / 99.31;
+    -webkit-clip-path: polygon(25% 0,75% 0,100% 50%,75% 100%,25% 100%,0 50%);
+    clip-path: polygon(25% 0,75% 0,100% 50%,75% 100%,25% 100%,0 50%);
+}
+@supports not (clip-path: polygon(0 0)) {
+    .hex::before,
+    .hex::after,
+    .hex__hit {
+        -webkit-clip-path: none;
+        clip-path: none;
+    }
+    .hex::before,
+    .hex::after {
+        left: 0; right: 0; width: 100%;
+        transform: none;
+    }
+    .hex__hit {
+        left: 0; right: 0; width: 100%;
+        transform: none;
+    }
+}
+@supports not (aspect-ratio: 1 / 1) {
+    .hex::before,
+    .hex::after,
+    .hex__hit {
+        left: 0; right: 0; width: 100%;
+        transform: none;
+    }
 }
 .is-dragging .hex__hit { cursor: grabbing; }
 
@@ -465,9 +491,13 @@ body.dock-collapsed { --dock-shift: calc(100% - var(--dock-tab)); }
 
 @media (orientation: portrait) {
     .dock {
-        left: max(12px, env(safe-area-inset-left));
-        right: max(12px, env(safe-area-inset-right));
-        bottom: max(12px, env(safe-area-inset-bottom));
+        left: 12px;
+        right: 12px;
+        bottom: 12px;
+        left: max(12px, env(safe-area-inset-left, 0px));
+        right: max(12px, env(safe-area-inset-right, 0px));
+        bottom: max(12px, env(safe-area-inset-bottom, 0px));
+        max-height: 60vh;
         max-height: min(60dvh, 60vh);
         flex-direction: column;
         transform: translateY(var(--dock-shift));
@@ -475,7 +505,8 @@ body.dock-collapsed { --dock-shift: calc(100% - var(--dock-tab)); }
 }
 @media (orientation: landscape) {
     .dock {
-        right: max(12px, env(safe-area-inset-right));
+        right: 12px;
+        right: max(12px, env(safe-area-inset-right, 0px));
         top: 50%;
         width: min(34vw, var(--dock-w));
         max-height: 86vh;
