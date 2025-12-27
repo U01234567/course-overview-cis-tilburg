@@ -649,16 +649,6 @@
 		.cis-intro.cis-intro--fade { background: var(--accent); animation: cis-fade 700ms ease-in forwards; }
 		@keyframes cis-fade { to { opacity: 0; } }
 
-		@media print {
-			@page { size: A4 landscape; margin: 0; }
-			html, body { width: 297mm; height: 210mm; }
-			body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-			.stage { position: absolute; inset: 0; }
-			.layer { transform: translate(-50%, -50%) scale(1) translate(0px, 0px) !important; }
-			.hex { filter: drop-shadow(var(--shadow-print-1)) drop-shadow(var(--shadow-print-2)) !important; }
-			.dock,.tour,.toast,.btn--center,.btn--close-overview,.info { display: none !important; }
-		}
-
 		@media (prefers-reduced-motion: reduce) {
 			.layer, .dock, .info { transition: none !important; }
 			.cis-intro { display: none; }
@@ -954,7 +944,7 @@
 
                 <!-- Actions -->
                 <div class="dock__row dock__row--actions">
-                    <a class="btn btn--download" href="#!" aria-label="Download" id="downloadBtn">Download</a>
+                    <a class="btn btn--download" href="#!" aria-label="Download" id="downloadBtn">Download as PNG</a>
                 </div>
             </div>
 		</aside>
@@ -986,6 +976,7 @@
             <p id="infoText">Select a course to see details here.</p>
         </div>
 
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/html-to-image/1.11.13/html-to-image.min.js" integrity="sha512-iZ2ORl595Wx6miw+GuadDet4WQbdSWS3JLMoNfY8cRGoEFy6oT3G9IbcrBeL6AfkgpA51ETt/faX6yLV+/gFJg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 	<script>
 		/* =============================================================================
 			0) Config
@@ -3224,20 +3215,262 @@
 		})(App);
 
 		/* =============================================================================
-			8) Export
-		============================================================================= */
-		App.Export = (function () {
-			function run() {
-				const after = () => window.removeEventListener('afterprint', after);
-				window.addEventListener('afterprint', after);
+		8) Export — as PNG (html-to-image external tool)
+		============================================================================ */
+		App.Export = (function (app) {
+		async function run() {
+			const stage = app?.el?.stage || document.querySelector('.stage');
+			const grid  = app?.el?.grid  || document.querySelector('.hex-grid');
+			if (!stage || !grid) return;
 
-				setTimeout(() => {
-					try { window.print(); } catch (_) { after(); }
-				}, 20);
+			const restore = hideChrome();
+			try {
+			// A4 landscape, viewport-independent
+			const W = 4800, H = Math.round(W / Math.SQRT2);
+			const OUT = createCanvas(W, H), ctx = OUT.ctx;
+
+			// Layout
+			const Mx = 72, My = 60;
+			const innerW = W - 2 * Mx, innerH = H - 2 * My;
+			const titleH = Math.floor(innerH * 0.09);
+			const midH   = Math.floor(innerH * 0.76);
+			const footH  = innerH - titleH - midH;
+			const left   = Mx, top = My, titleY = top, midY = top + titleH, footY = midY + midH;
+			const inset = 24;
+			const contX = left + inset, contW = innerW - 2 * inset;
+			const contY = midY  + inset, contH = (midH + footH) - 2 * inset;
+			fill(ctx, 0, 0, W, H, css('--surface', '#fff'));
+			fill(ctx, contX, contY, contW, contH, css('--surface-2', '#e3e3e3'));
+
+			// Row 1 in PNG
+			const titlePx = Math.floor(titleH * 0.70);
+			await drawTitleBar(ctx, left, titleY, innerW, titleH, titlePx);
+
+			const st = stage.getBoundingClientRect();
+			const allHex = Array.from(grid.querySelectorAll('.hex'))
+				.filter(n => getComputedStyle(n).display !== 'none');
+			const rs  = (allHex.length ? allHex : [grid]).map(n => n.getBoundingClientRect());
+			let L=+Infinity,T=+Infinity,R=-Infinity,B=-Infinity;
+			for (const r of rs) { L=Math.min(L,r.left); T=Math.min(T,r.top); R=Math.max(R,r.right); B=Math.max(B,r.bottom); }
+
+			let cx = L - st.left, cy = T - st.top, cw = Math.max(1, R-L), ch = Math.max(1, B-T);
+			const pad = Math.round(Math.max(cw, ch) * 0.08);
+			cx = Math.max(0, cx - pad); cy = Math.max(0, cy - pad);
+			cw = Math.min(st.width  - cx, cw + pad*2);
+			ch = Math.min(st.height - cy, ch + pad*2);
+
+			// Row 2 in PNG
+			const row2Top = contY, row2H = Math.floor(midH - inset);
+			const fit     = Math.min(contW / cw, row2H / ch);
+			const pr      = Math.max(2, fit * 1.6);
+
+			const snapshot = await htmlToImage.toPng(stage, {
+				pixelRatio: pr,
+				backgroundColor: css('--surface-2', '#e3e3e3'),
+				cacheBust: true
+			});
+
+			const sx = Math.round(cx * pr), sy = Math.round(cy * pr);
+			const sw = Math.round(cw * pr), sh = Math.round(ch * pr);
+			const dw = Math.round(cw * fit), dh = Math.round(ch * fit);
+			const dx = contX + Math.floor((contW - dw) / 2);
+			const dy = row2Top + Math.floor((row2H - dh) / 2);
+
+			const img = await loadImg(snapshot);
+			ctx.imageSmoothingEnabled = true; ctx.imageSmoothingQuality = 'high';
+			ctx.drawImage(img, sx, sy, sw, sh, dx, dy, dw, dh);
+
+			stroke(ctx, contX, contY, contW, contH, css('--title', '#003366'), 4);
+
+			// Row 3 in PNG
+			const legend = collectLegendData(app, grid);
+			const basePx = Math.max(14, Math.floor(titlePx * 0.34));
+			const cardMarginSides = Math.max(28, Math.floor(footH * 0.10));
+			const cardX = contX + cardMarginSides;
+			const cardY = footY;
+			const cardW = contW - cardMarginSides * 2;
+			const cardH = contY + contH - cardY - cardMarginSides;
+			drawLegendCardCentered(ctx, cardX, cardY, cardW, cardH, legend, basePx);
+
+			// Download
+			triggerDownload(OUT.canvas.toDataURL('image/png'), 'CIS-overview.png');
+			} finally { restore(); }
+		}
+
+		// ---------- Legend data rules ----------
+		function collectLegendData(app, grid) {
+			const mode = (document.body.getAttribute('data-view-mode') || 'tracks').toLowerCase();
+			const rawTheme = (app?.state?.selection?.theme || '').toString().trim();
+			const theme = rawTheme && rawTheme.toLowerCase() !== 'all' ? rawTheme : '(none)';
+			const tiles = Array.from(grid.querySelectorAll('.hex'));
+			const total = tiles.length;
+			const visible = tiles.filter(el => !el.classList.contains('hex--dim')).length || total;
+			if (mode === 'blocks') {
+			return {
+				heading: 'Blocks', theme, visible, total,
+				chips: [
+				{ label: 'Block 1', color: css('--track-bdm', '#008fc7') },
+				{ label: 'Block 2', color: css('--track-cc',  '#3c7a47') },
+				{ label: 'Block 3', color: css('--track-nmd', '#ab833f') },
+				{ label: 'Block 4', color: css('--track-extra', '#d22f2f') }
+				]
+			};
 			}
+			return {
+			heading: 'Tracks', theme, visible, total,
+			chips: [
+				{ label: 'BDM', color: css('--track-bdm', '#008fc7') },
+				{ label: 'CC',  color: css('--track-cc',  '#3c7a47') },
+				{ label: 'NMD', color: css('--track-nmd', '#ab833f') }
+			]
+			};
+		}
 
-			return { run };
-		})();
+		// ---------- Title bar with Tilburg University logo & stamp ----------
+		async function drawTitleBar(ctx, x, y, w, h, px) {
+			const inset = Math.floor(h * .20);
+			const centerY = y + Math.floor(h / 2);
+
+			// Logo
+			const logoSize = Math.floor(h * 0.75);
+			await drawSvgById(ctx, 'Tiu-logo', x + inset, centerY - Math.floor(logoSize/2), logoSize, logoSize);
+
+			// Title
+			ctx.fillStyle = css('--title', '#003366');
+			ctx.textBaseline = 'middle';
+			ctx.font = `900 ${px}px system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif`;
+			const titleX = x + inset + logoSize + Math.floor(logoSize * 0.4);
+			ctx.fillText('CIS Overview', titleX, centerY);
+
+			// Stamp
+			ctx.font = `500 ${Math.floor(px * .34)}px system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif`;
+			ctx.fillStyle = css('--text-weak','rgba(0,0,0,.72)');
+			ctx.textAlign = 'right';
+			ctx.fillText(`Exported at: ${new Date().toLocaleString()}`, x + w - inset, y + Math.floor(h * .35));
+			ctx.textAlign = 'start';
+		}
+
+		async function drawSvgById(ctx, id, x, y, w, h) {
+			const src = document.getElementById(id);
+			if (!src) return;
+			const clone = src.cloneNode(true);
+			inlineSvgPaint(src, clone);
+			if (!clone.getAttribute('xmlns')) clone.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+			clone.setAttribute('width', String(w));
+			clone.setAttribute('height', String(h));
+			const svgText = new XMLSerializer().serializeToString(clone);
+			const blob = new Blob([svgText], { type: 'image/svg+xml' });
+			const url = URL.createObjectURL(blob);
+			try {
+				const img = await loadImg(url);
+				ctx.drawImage(img, x, y, w, h);
+			} finally {
+				URL.revokeObjectURL(url);
+			}
+		}
+		
+		function inlineSvgPaint(srcRoot, dstRoot) {
+			const sWalker = document.createTreeWalker(srcRoot, NodeFilter.SHOW_ELEMENT);
+			const dWalker = document.createTreeWalker(dstRoot, NodeFilter.SHOW_ELEMENT);
+			while (sWalker.nextNode() && dWalker.nextNode()) {
+				const sEl = sWalker.currentNode;
+				const dEl = dWalker.currentNode;
+				const cs = getComputedStyle(sEl);
+				const fill = cs.fill;
+				const stroke = cs.stroke;
+				if (fill && fill !== 'none') dEl.setAttribute('fill', fill);
+				if (stroke && stroke !== 'none') dEl.setAttribute('stroke', stroke);
+			}
+		}
+
+		// ---------- Legend card ----------
+		function drawLegendCardCentered(ctx, x, y, w, h, data, basePx) {
+			// Card
+			roundRect(ctx, x, y, w, h, Math.max(12, Math.floor(h*.08)), css('--surface','#fff'), css('--border-strong','rgba(0,0,0,.14)'));
+
+			// Base metrics
+			const pad = Math.max(24, Math.floor(basePx * 1.2));
+			const colGap = Math.max(pad, Math.floor(w * .04));
+			const colW = Math.floor((w - 2*pad - colGap) / 2);
+			const fsHead = Math.floor(basePx * 1.2);
+			const fsLbl  = Math.floor(basePx * 1.2);
+			const chipSz = Math.floor(basePx * .95);
+			const gapA   = Math.floor(basePx * 1.4);  // heading->chips
+			const gapB   = Math.floor(basePx * 0.6);  // theme->courses
+
+			const leftBlockH  = fsHead + gapA + chipSz;
+			const rightBlockH = fsLbl + gapB + fsLbl;
+			const blockH = Math.max(leftBlockH, rightBlockH);
+			const vy = y + Math.floor((h - blockH) / 2);
+
+			let cx = x + pad, cy = vy;
+			ctx.fillStyle = css('--title', '#003366');
+			ctx.font = `800 ${fsHead}px system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif`;
+			ctx.fillText(data.heading, cx, cy + fsHead);        // baseline draw
+			const chipsTop = cy + fsHead + gapA + Math.floor(chipSz * 0.75);
+			drawChipsRow(ctx, cx, chipsTop, data.chips, chipSz);
+
+			cx = x + pad + colW + colGap; cy = vy;
+			const txt = css('--text', '#0d0e0e');
+			const titleC = css('--title', '#003366');
+			ctx.fillStyle = titleC;
+			ctx.font = `800 ${fsLbl}px system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif`;
+			ctx.fillText('Theme', cx, cy + fsLbl);
+			ctx.fillStyle = txt;
+			ctx.font = `${fsLbl}px system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif`;
+			ctx.fillText(String(data.theme), cx + Math.floor(colW * 0.35), cy + fsLbl);
+
+			ctx.fillStyle = titleC;
+			ctx.font = `800 ${fsLbl}px system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif`;
+			const cy2 = cy + fsLbl + gapB;
+			ctx.fillText('Courses', cx, cy2 + fsLbl);
+			ctx.fillStyle = txt;
+			ctx.font = `${fsLbl}px system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif`;
+			ctx.fillText(`${data.visible} / ${data.total}`, cx + Math.floor(colW * 0.35), cy2 + fsLbl);
+		}
+
+		function drawChipsRow(ctx, x, yBaseline, chips, size) {
+			const sq = Math.max(10, Math.floor(size));
+			const sp1 = ctx.measureText(' ').width;
+			const sp4 = ctx.measureText('    ').width;
+			let cx = x;
+			for (const c of chips) {
+			const top = yBaseline - Math.floor(sq * 0.75);
+			fill(ctx, cx, top, sq, sq, c.color);
+			cx += sq + sp1;
+
+			ctx.fillStyle = css('--text', '#0d0e0e');
+			ctx.font = `${size}px system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif`;
+			ctx.textBaseline = 'alphabetic';
+			ctx.fillText(c.label, cx, yBaseline);
+			cx += ctx.measureText(c.label).width + sp4;
+			}
+		}
+
+		// ----- micro-utils -----
+		function hideChrome() {
+			const undo = [];
+			for (const s of ['.dock','.tour','.toast','.btn--center','.info','.btn--close-overview','.app-title']) {
+			const el = document.querySelector(s); if (!el) continue;
+			const d = el.style.display; el.style.display='none'; undo.push(()=>el.style.display=d);
+			}
+			return () => undo.reverse().forEach(f=>f());
+		}
+		function createCanvas(w,h){ const c=document.createElement('canvas'); c.width=w; c.height=h; return {canvas:c,ctx:c.getContext('2d')}; }
+		function fill(ctx,x,y,w,h,color){ ctx.save(); ctx.fillStyle=color; ctx.fillRect(x,y,w,h); ctx.restore(); }
+		function stroke(ctx,x,y,w,h,color,px){ ctx.save(); ctx.strokeStyle=color; ctx.lineWidth=px||1; ctx.strokeRect(x,y,w,h); ctx.restore(); }
+		function roundRect(ctx,x,y,w,h,r,fillCol,strokeCol){
+			const rr=Math.max(0,Math.min(r,Math.min(w,h)/2)); ctx.beginPath();
+			ctx.moveTo(x+rr,y); ctx.arcTo(x+w,y,x+w,y+h,rr); ctx.arcTo(x+w,y+h,x,y+h,rr);
+			ctx.arcTo(x,y+h,x,y,rr); ctx.arcTo(x,y,x+w,y,rr); ctx.closePath();
+			if(fillCol){ctx.fillStyle=fillCol;ctx.fill();} if(strokeCol){ctx.strokeStyle=strokeCol;ctx.lineWidth=1;ctx.stroke();}
+		}
+		function css(name,fallback){ return getComputedStyle(document.body).getPropertyValue(name).trim() || fallback; }
+		function loadImg(url){ return new Promise((res,rej)=>{ const i=new Image(); i.onload=()=>res(i); i.onerror=rej; i.src=url; }); }
+		function triggerDownload(dataUrl, filename){ const a=document.createElement('a'); a.href=dataUrl; a.download=filename; document.body.appendChild(a); a.click(); a.remove(); }
+
+		return { run };
+		})(App);
 
 		/* =============================================================================
 			9) Tips (driven by tipsData JSON; step count x/total; preserves order)

@@ -638,16 +638,6 @@ body.dock-collapsed { --dock-shift: calc(100% - var(--dock-tab)); }
 .cis-intro.cis-intro--fade { background: var(--accent); animation: cis-fade 700ms ease-in forwards; }
 @keyframes cis-fade { to { opacity: 0; } }
 
-@media print {
-    @page { size: A4 landscape; margin: 0; }
-    html, body { width: 297mm; height: 210mm; }
-    body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-    .stage { position: absolute; inset: 0; }
-    .layer { transform: translate(-50%, -50%) scale(1) translate(0px, 0px) !important; }
-    .hex { filter: drop-shadow(var(--shadow-print-1)) drop-shadow(var(--shadow-print-2)) !important; }
-    .dock,.tour,.toast,.btn--center,.btn--close-overview,.info { display: none !important; }
-}
-
 @media (prefers-reduced-motion: reduce) {
     .layer, .dock, .info { transition: none !important; }
     .cis-intro { display: none; }
