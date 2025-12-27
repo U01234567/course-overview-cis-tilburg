@@ -563,7 +563,7 @@ body.dock-collapsed { --dock-shift: calc(100% - var(--dock-tab)); }
     .tour { left: 16px; top: 60px; transform: none; width: min(440px, calc(100vw - var(--dock-reserve-right) - 32px)); }
 }
 
-.toast { padding: .55rem .75rem; border-radius: 12px; left: 50%; transform: translateX(-50%); }
+.toast { padding: .55rem .75rem; border-radius: 12px; left: 50%; transform: translateX(-50%); background: var(--track-extra); color: #fff}
 .toast.is-open { display: block; }
 @media (orientation: portrait) { .toast { bottom: calc(var(--dock-reserve-bottom) + 12px); } }
 @media (orientation: landscape) { .toast { bottom: 16px; } }
