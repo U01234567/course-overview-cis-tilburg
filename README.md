@@ -1,6 +1,6 @@
 # Course Overview CIS (Tilburg University)
 
-Interactive, mobile-first visual of all MSc Communication and Information Sciences (CIS) courses (Tilburg University). Explore by Track or Block, filter by theme or individual courses, and tap hexagons for details. Includes a short guided tour for users and print/export.
+Interactive, mobile-first visual of all MSc Communication and Information Sciences (CIS) courses (Tilburg University). Explore by Track or Block, filter by theme or individual courses, and tap hexagons for details. Includes a short guided tour for users and export of their tailored course overview.
 
 # Who this is for
 
@@ -218,7 +218,7 @@ If no pattern is set for the current number of courses, the app auto-layouts.
 * `regular/assets/css/style.css` — change colours, spacing, and fonts.
 * The top of the stylesheet defines all theme colours as CSS variables under “0) THEME & COLOR TOKENS”; edit those tokens to restyle the app quickly. Make matching updates in the Dark overrides under `body[data-ui-theme="dark"]`. 
 * The app supports light/dark theme toggle.
-* Printing uses a clean A4-landscape layout.
+* "Download as PNG" uses a high-quality A4-landscape layout.
 
 # Using the interface (quick recap)
 
@@ -226,7 +226,7 @@ If no pattern is set for the current number of courses, the app auto-layouts.
 * Filter by Theme or toggle individual courses.
 * Click a hex for details; click again or press Esc to close.
 * Use “Center” to reset the view.
-* Use Download/Print for a printable page.
+* Use Download as PNG for a printable / shareable image.
 
 # Troubleshooting
 
