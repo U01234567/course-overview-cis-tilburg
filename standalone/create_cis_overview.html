@@ -304,47 +304,25 @@
 		.hex--dim::before { background: var(--hex-dim-fill, var(--fill-base)); }
 		.hex--dim { opacity: .26; --dim-o: 1; }
 		body[data-ui-theme="dark"] .hex--dim { opacity: .14; }
+
+		.hex--dim-block .hex__hit { pointer-events: none; }
+		.hex--dim-block .hex__label { opacity: 0; visibility: hidden; }
+		.hex--dim-block::before { background: var(--hex-dim-fill, var(--fill-base)); }
+		.hex--dim-block { opacity: .26; --dim-o: 1; }
+		body[data-ui-theme="dark"] .hex--dim-block { opacity: .14; }
+
 		.hex--subdue { opacity: .45; }
 		.hex--focus { filter: var(--shadow-focus-filter); z-index: 5; opacity: 1; }
 		.hex--focus::before { box-shadow: 0 0 0 3px var(--title) inset; }
 
 		/* =========================================================================
-		3) VIEW MODES & LEGENDS
+		3) LEGENDS
 		========================================================================= */
-		/* Blocks mode */
-		body[data-view-mode="blocks"] .hex__svg { display: none !important; visibility: hidden !important; opacity: 0 !important; }
-		body[data-view-mode="blocks"] .hex { background: transparent !important; }
-		body[data-view-mode="blocks"] .hex::before { box-shadow: none !important; }
-		body[data-view-mode="blocks"] .hex[data-block="1"]::before { background: var(--track-bdm); }
-		body[data-view-mode="blocks"] .hex[data-block="2"]::before { background: var(--track-cc); }
-		body[data-view-mode="blocks"] .hex[data-block="3"]::before { background: var(--track-nmd); }
-		body[data-view-mode="blocks"] .hex[data-block="4"]::before { background: var(--track-extra); }
-		body[data-view-mode="blocks"] .hex[data-block=""],
-		body[data-view-mode="blocks"] .hex[data-block="-"] { --hex-bg: var(--fill-base); }
-
-		body[data-ui-theme="light"][data-view-mode="blocks"] .hex .hex__label { color: var(--text-on-color); }
-		body[data-view-mode="blocks"] .hex[data-block=""] .hex__label,
-		body[data-view-mode="blocks"] .hex[data-block="-"] .hex__label { color: var(--accent) !important; }
-		body[data-ui-theme="dark"][data-view-mode="blocks"] .hex[data-block]:not([data-block=""]):not([data-block="-"]) .hex__label { color: var(--text-on-color) !important; }
-
-		#legendTracks, #legendBlocks { display: none; }
-		body[data-view-mode="tracks"] #legendTracks { display: block; }
-		body[data-view-mode="blocks"] #legendBlocks { display: block; }
+		#legendTracks { display: block; }
 
 		/* Label color rule: single-track uses accent-contrast */
 		.hex[data-track]:not([data-track*=" "]) .hex__label { color: var(--accent-contrast); }
 		body[data-ui-theme="dark"] .hex[data-track*=" "] .hex__label { color: var(--text-on-color); }
-
-		/* Dim overlay fill mapping */
-		body[data-view-mode="tracks"] .hex[data-track="BDM"] { --hex-dim-fill: var(--track-bdm); }
-		body[data-view-mode="tracks"] .hex[data-track="CC"] { --hex-dim-fill: var(--track-cc); }
-		body[data-view-mode="tracks"] .hex[data-track="NMD"] { --hex-dim-fill: var(--track-nmd); }
-		body[data-view-mode="blocks"] .hex[data-block="1"] { --hex-dim-fill: var(--track-bdm); }
-		body[data-view-mode="blocks"] .hex[data-block="2"] { --hex-dim-fill: var(--track-cc); }
-		body[data-view-mode="blocks"] .hex[data-block="3"] { --hex-dim-fill: var(--track-nmd); }
-		body[data-view-mode="blocks"] .hex[data-block="4"] { --hex-dim-fill: var(--track-extra); }
-		body[data-view-mode="blocks"] .hex[data-block=""],
-		body[data-view-mode="blocks"] .hex[data-block="-"] { --hex-dim-fill: var(--fill-base); }
 
 		body.is-moving .hex,
 		body.is-moving .hex--focus { filter: none !important; }
@@ -473,6 +451,9 @@
 		.group--themes, .group--courses { display: grid; grid-auto-rows: min-content; row-gap: .45rem; overflow: auto; }
 		.group--themes { max-height: 8rem; }
 		.group--courses { max-height: 12rem; }
+		.group--inline {
+			display: grid; grid-auto-flow: column; grid-auto-columns: min-content; column-gap: .45rem; align-items: center;
+		}
 
 		/* Buttons */
 		.btn {
@@ -579,7 +560,7 @@
 			.tour { left: 16px; top: 60px; transform: none; width: min(440px, calc(100vw - var(--dock-reserve-right) - 32px)); }
 		}
 
-		.toast { padding: .55rem .75rem; border-radius: 12px; left: 50%; transform: translateX(-50%); background: var(--track-extra); color: #fff}
+		.toast { padding: .55rem .75rem; border-radius: 12px; left: 50%; transform: translateX(-50%); background: var(--surface); color: var(--text)}
 		.toast.is-open { display: block; }
 		@media (orientation: portrait) { .toast { bottom: calc(var(--dock-reserve-bottom) + 12px); } }
 		@media (orientation: landscape) { .toast { bottom: 16px; } }
@@ -674,7 +655,7 @@
 
 	</head>
 
-	<body data-ui-theme="light" data-view-mode="tracks">
+	<body data-ui-theme="light">
 		<!-- =========================================================
 			APP SHELL: intro mask
 			========================================================= -->
@@ -844,22 +825,9 @@
                 </div>
 				<div class="dock__scroll" id="dockScroll" role="region" aria-label="Legend and filters">
 
-					<!-- View mode -->
-					<div class="dock__row mode-toggle" aria-label="Legend mode">
-						<fieldset class="segmented" role="radiogroup" aria-label="View mode">
-							<label>
-								<input type="radio" name="viewMode" value="tracks" id="modeTracks" checked />
-								<span>Tracks</span>
-							</label>
-							<label>
-								<input type="radio" name="viewMode" value="blocks" id="modeBlocks" />
-								<span>Blocks</span>
-							</label>
-						</fieldset>
-					</div>
-
 					<!-- Legends -->
 					<div class="legend-grid" id="legend" aria-label="Legend and filter summary">
+						
 						<!-- Tracks legend -->
 						<div class="legend-box" id="legendTracks" aria-label="Track colors">
 							<div class="legend-title">
@@ -889,41 +857,6 @@
 							</div>
 						</div>
 
-						<!-- Blocks legend -->
-						<div class="legend-box" id="legendBlocks" aria-label="Block colors" hidden>
-							<div class="legend-title">Blocks</div>
-							<div class="legend-tracks">
-								<div class="legend-item">
-									<span class="sq bdm" aria-hidden="true"></span>
-									<span class="abbr">1</span>
-									<button type="button" class="info-btn" title="Block 1: Sept - Oct" aria-label="Block 1: Sept - Oct">
-									<span class="icon-info" aria-hidden="true">i</span>
-									</button>
-								</div>
-								<div class="legend-item">
-									<span class="sq cc" aria-hidden="true"></span>
-									<span class="abbr">2</span>
-									<button type="button" class="info-btn" title="Block 2: Nov - Jan" aria-label="Block 2: Nov - Jan">
-									<span class="icon-info" aria-hidden="true">i</span>
-									</button>
-								</div>
-								<div class="legend-item">
-									<span class="sq nmd" aria-hidden="true"></span>
-									<span class="abbr">3</span>
-									<button type="button" class="info-btn" title="Block 3: Feb - Mrt" aria-label="Block 3: Feb - Mrt">
-									<span class="icon-info" aria-hidden="true">i</span>
-									</button>
-								</div>
-								<div class="legend-item">
-									<span class="sq extra" aria-hidden="true"></span>
-									<span class="abbr">4</span>
-									<button type="button" class="info-btn" title="Block 4: Apr - Jul" aria-label="Block 4: Apr - Jul">
-									<span class="icon-info" aria-hidden="true">i</span>
-									</button>
-								</div>
-							</div>
-						</div>
-
 						<!-- Theme summary -->
 						<div class="legend-box" id="legendThemeBox" aria-label="Theme summary">
 							<div class="legend-title">Theme</div>
@@ -934,6 +867,23 @@
 					<!-- Filters -->
 					<form class="controls controls--minimal" id="themeForm" aria-label="Course theme and visibility">
 						<div class="toggle-stack">
+
+							<!-- Block visibility -->
+							<details class="collapsible pill" id="blockDetails">
+								<summary>Show blocks</summary>
+								<div class="collapsible__body">
+									<fieldset aria-label="Show blocks">
+										<legend class="sr-only">Blocks</legend>
+										<div class="group group--inline" id="blockFilterGroup">
+											<label class="chip"><input type="checkbox" name="blocks" value="1" checked><span>1</span></label>
+											<label class="chip"><input type="checkbox" name="blocks" value="2" checked><span>2</span></label>
+											<label class="chip"><input type="checkbox" name="blocks" value="3" checked><span>3</span></label>
+											<label class="chip"><input type="checkbox" name="blocks" value="4" checked><span>4</span></label>
+										</div>
+									</fieldset>
+								</div>
+							</details>
+
 							<!-- Theme chooser -->
 							<details class="collapsible pill" id="themeDetails">
 								<summary>Select a theme</summary>
@@ -1004,8 +954,6 @@
 			0) Config
 		============================================================================= */
 		const Config = {
-			defaultTheme: null,
-
 			minScaleFactor: 0.25,
 			maxScaleFactor: 6,
 
@@ -1126,8 +1074,9 @@
 				infoBiasTy: 0,
 
 				selection: {
-					theme: Config.defaultTheme,
-					hiddenIds: new Set()
+					theme: null,
+					hiddenIds: new Set(),
+					blocksActive: new Set(['1','2','3','4'])
 				},
 
 				focusedId: null,
@@ -1175,6 +1124,8 @@
 
 				themeDetails: null,
 				courseDetails: null,
+
+				blockFilterGroup: null,
 
 				tour: null,
 				tourStep: null,
@@ -1617,7 +1568,79 @@
 		})();
 
 		/* =============================================================================
-			4) Themes (deduplicated)
+            4) Filters (Blocks) — state-driven, composes with other filters
+        ============================================================================= */
+         App.Filters = (function (app) {
+             const ALL_BLOCKS = new Set(['1','2','3','4']);
+
+             function getBlockInputs() {
+                 return Array.from(document.querySelectorAll('#blockFilterGroup input[name="blocks"]'));
+             }
+
+             function readBlocksFromUI() {
+                 const active = new Set();
+                 for (const el of getBlockInputs()) {
+                     if (el.checked) active.add(String(el.value));
+                 }
+                 return active;
+             }
+
+             function setAllBlockChips(checked) {
+                 for (const el of getBlockInputs()) el.checked = !!checked;
+             }
+
+             function resetBlocksToAll(silent = false) {
+                 setAllBlockChips(true);
+                 app.state.selection.blocksActive = new Set(ALL_BLOCKS);
+                 applyBlockDimming();
+                 if (!silent) Util.toast('Blocks re-activated.');
+             }
+
+             function initBlockFilterUI() {
+                 // Initialize default state if missing
+                 if (!app.state.selection.blocksActive) {
+                     app.state.selection.blocksActive = new Set(ALL_BLOCKS);
+                 }
+                 // Wire chip changes
+                 getBlockInputs().forEach((el) => {
+                     el.addEventListener('change', () => {
+                         app.state.selection.blocksActive = readBlocksFromUI();
+                         applyBlockDimming();
+                     });
+                 });
+                 // Ensure initial application (safe if hexes are not rendered yet)
+                 applyBlockDimming();
+             }
+
+             function courseMatchesActiveBlocks(course, active) {
+                 // If a course has no block info, treat it as always visible.
+                 const blocks = Array.isArray(course?.block) ? course.block : [];
+                 if (blocks.length === 0) return true;
+                 for (const b of blocks) {
+                     if (active.has(String(b))) return true;
+                 }
+                 return false;
+             }
+
+             function applyBlockDimming() {
+                 const active = app.state.selection.blocksActive || ALL_BLOCKS;
+                 // Iterate rendered hexes; do not interfere with other dim reasons.
+                 for (const [id, hexEl] of app.cache.hexById || []) {
+                     const course = app.cache.courseById.get(id);
+                     const ok = courseMatchesActiveBlocks(course, active);
+                     hexEl.classList.toggle('hex--dim-block', !ok);
+                 }
+             }
+
+             return {
+                 initBlockFilterUI,
+                 applyAll: applyBlockDimming,
+                 resetBlocksToAll
+             };
+         })(App);
+
+		/* =============================================================================
+			5) Themes (deduplicated)
 		============================================================================= */
 		App.Themes = (function () {
 			let _all = [];
@@ -1664,7 +1687,53 @@
 		})();
 
 		/* =============================================================================
-			5) UI
+			6) Actions (single source of truth for resets)
+			- Avoids near-duplicate reset flows and keeps UI + state in sync.
+		============================================================================= */
+		App.Actions = (function (app) {
+			function resetAll({ silent = false, recenter = true } = {}) {
+				// 1) State resets
+				app.state.selection.theme = null;
+				app.state.selection.hiddenIds = new Set();
+				App.Filters.resetBlocksToAll(true); // silent toast; we'll show one consolidated toast below
+				
+				// 2) Theme UI reset
+				const themeInputs = document.querySelectorAll('#themeGroup input');
+				themeInputs.forEach((el) => { el.checked = false; });
+				if (app.el.legendTheme) app.el.legendTheme.textContent = '(none)';
+
+				// Ensure 'No theme / show all' is selected when theme is null
+				const noneThemeInput = document.getElementById('theme-none') || themeInputs[0];
+				if (noneThemeInput) {
+					noneThemeInput.checked = true;
+				}
+				
+				// 3) Course UI reset
+				const courseInputs = document.querySelectorAll('#courseGroup input[type="checkbox"]');
+				courseInputs.forEach((el) => { el.checked = true; });
+				const total = App.Domain.all().length;
+				const countEl = document.getElementById('courseCount');
+				if (countEl) countEl.textContent = `(${total} / ${total})`;
+				
+				// 4) Clear any dimming/hidden flags on tiles (theme/blocks/courses)
+				if (app.cache?.hexById) {
+					for (const [, hexEl] of app.cache.hexById) {
+						hexEl.classList.remove('hex--dim', 'hex--dim-block', 'hex--hidden', 'hex--focus');
+					}
+				}
+				App.Interaction.applyFilter();
+				
+				// 5) Recentering as part of "reset view"
+				if (recenter && app.el.centerBtn) app.el.centerBtn.click();
+				
+				if (!silent) Util.toast('Reset: blocks, themes, and courses restored.');
+			}
+			
+			return { resetAll };
+		})(App);
+
+		/* =============================================================================
+			7) UI
 		============================================================================= */
 		App.UI = (function (app) {
 			let _transformPending = false;
@@ -1676,6 +1745,7 @@
 				app.el.workspace = document.querySelector('.workspace');
 				app.el.grid = document.getElementById('hexGrid');
 				app.el.appTitle = document.querySelector('.app-title');
+				app.el.blockFilterGroup = document.getElementById('blockFilterGroup');
 
 				app.el.themeForm = document.getElementById('themeForm');
 				app.el.centerBtn = document.getElementById('centerBtn');
@@ -1715,7 +1785,7 @@
 				bindThemeToggle();
 				bindDockControls();
 				bindInfoClose();
-				bindLegendModeToggle();
+				App.Filters.initBlockFilterUI();
 
 				window.addEventListener('resize', () => {
 					updateDockToggleUI();
@@ -1730,6 +1800,33 @@
 				updateDockToggleUI();
 				updateWorkspaceReserve();
 				wireDockSwipe();
+
+				const handleResetClick = (source) => {
+					const confirmed = confirm(
+						'Reset your overview?\n\n' +
+						'This will:\n' +
+						'• Select all courses and blocks again\n' +
+						'• Deactivate any active themes\n' +
+						'• Restore the default view\n\n' +
+						'Are you sure?'
+					);
+					if (confirmed) {
+						App.Actions.resetAll();
+					}
+				};
+
+				if (app.el.resetBtn) {
+					app.el.resetBtn.addEventListener('click', (e) => {
+						e.preventDefault();
+						handleResetClick('resetBtn click');
+					});
+				}
+				if (app.el.appTitle) {
+					app.el.appTitle.addEventListener('click', (e) => {
+						e.preventDefault();
+						handleResetClick('appTitle click');
+					});
+				}
 			}
 
 			function initCollapsiblesInitialState() {
@@ -1884,24 +1981,6 @@
 				});
 			}
 
-			/* Bind Tracks/Blocks mode toggle */
-			function bindLegendModeToggle(){
-				const tracks = document.getElementById('modeTracks');
-				const blocks = document.getElementById('modeBlocks');
-				const boxTracks = document.getElementById('legendTracks');
-				const boxBlocks = document.getElementById('legendBlocks');
-				function apply(mode){
-					document.body.setAttribute('data-view-mode', mode);
-					const isBlocks = (mode === 'blocks');
-					boxTracks.hidden = isBlocks;
-					boxBlocks.hidden = !isBlocks;
-				}
-				tracks?.addEventListener('change', (e)=>{ if (e.target.checked) apply('tracks'); });
-				blocks?.addEventListener('change', (e)=>{ if (e.target.checked) apply('blocks'); });
-				/* init from body attr (default: tracks) */
-				apply(document.body.getAttribute('data-view-mode') || 'tracks');
-			}
-
 			function bindThemeToggle() {
 				const setText = () => {
 					const cur = document.body.getAttribute('data-ui-theme') || 'light';
@@ -1914,6 +1993,8 @@
 					const cur = document.body.getAttribute('data-ui-theme') || 'light';
 					document.body.setAttribute('data-ui-theme', (cur === 'dark') ? 'light' : 'dark');
 					setText();
+					App.Filters.resetBlocksToAll(true);
+					App.Filters.applyAll();
 				});
 
 				setText();
@@ -1967,7 +2048,9 @@
 					input.id = id;
 					input.value = value;
 
-					const selected = (value || null) === (app.state.selection.theme || null);
+					// For empty string (No theme), treat as null for comparison
+					const normalizedValue = (value === '') ? null : value;
+					const selected = normalizedValue === app.state.selection.theme;
 					if (selected) input.checked = true;
 
 					const span = document.createElement('span');
@@ -1977,10 +2060,53 @@
 					group.appendChild(wrap);
 				}
 
-				addChip('', 'No theme (show all)', 'theme-none', 'chip--none');
+				addChip('', 'No theme / show all', 'theme-none', 'chip--none');
+
+				const CUSTOM_THEME_ID = 'theme-custom';
+				addChip('Custom', 'Custom / start blank', CUSTOM_THEME_ID);
 				for (const t of themes) addChip(t.id, t.label, mkId(t.id));
 
 				sizeThemeList();
+
+				/* ----- Custom behaviour wiring (idempotent) ------------------------ */
+				if (!group._customHooked) {
+					group.addEventListener('change', (e) => {
+						const el = e.target;
+						if (!el || el.name !== 'theme') return;
+						if (!el.checked) return;
+						// If "Custom (start blank)" is chosen explicitly, deselect all courses
+						if (el.id === CUSTOM_THEME_ID) {
+							e.stopImmediatePropagation();
+							const boxes = app.el.courseGroup?.querySelectorAll('input[type="checkbox"]') || [];
+							for (const b of boxes) {
+								if (b.checked) {
+									b.checked = false;
+									b.dispatchEvent(new Event('change', { bubbles: true }));
+								}
+							}
+							// Set theme to 'Custom' to distinguish from 'No theme / show all'
+							app.state.selection.theme = 'Custom';
+							if (app.el.legendTheme) app.el.legendTheme.textContent = 'Custom';
+						}
+					});
+					group._customHooked = true;
+				}
+				
+				// If user tweaks courses after picking any theme (or none), flip the chip to "custom"
+				if (app.el.courseGroup && !app.el.courseGroup._customHooked) {
+					app.el.courseGroup.addEventListener('change', (e) => {
+						if (!(e.target && e.target.type === 'checkbox')) return;
+						if (e && e.isTrusted === false) return;
+						const customRadio = document.getElementById(CUSTOM_THEME_ID);
+						if (customRadio && !customRadio.checked) {
+							// Do NOT dispatch a change here — avoid re-deselecting via the handler above
+							customRadio.checked = true;
+							app.state.selection.theme = 'Custom';
+							if (app.el.legendTheme) app.el.legendTheme.textContent = 'Custom';
+						}
+					});
+					app.el.courseGroup._customHooked = true;
+				}
 			}
 
 			function renderCourseSelector(items) {
@@ -1989,7 +2115,11 @@
 
 				group.innerHTML = '';
 
-				for (const v of items) {
+				const byTitle = [...items].sort((a, b) =>
+					a.title.localeCompare(b.title, undefined, { sensitivity: 'base', numeric: true })
+				);
+
+				for (const v of byTitle) {
 					const id = 'course-' + v.id;
 
 					const wrap = document.createElement('label');
@@ -2093,7 +2223,13 @@
 
 			/* ----- Legend / Info ------------------------------------------------------ */
 			function updateLegend(selection) {
-				if (app.el.legendTheme) app.el.legendTheme.textContent = selection.theme || '(none)';
+				if (!app.el.legendTheme) return;
+				const customRadio = document.getElementById('theme-custom');
+				if (customRadio && customRadio.checked) {
+					app.el.legendTheme.textContent = 'Custom';
+					return;
+				}
+				app.el.legendTheme.textContent = selection.theme || '(none)';
 			}
 
 			function showInfo(item) {
@@ -2452,7 +2588,7 @@
 		})(App);
 
 		/* =============================================================================
-			6) Interaction (pan/zoom/tap, filters, resize)
+			8) Interaction (pan/zoom/tap, filters, resize)
 		============================================================================= */
 		App.Interaction = (function (app) {
 			const pointers = new Map();
@@ -2610,7 +2746,8 @@
 					const themes = themesAttr ? themesAttr.split(/\s+/) : [];
 
 					const deselectedByCourse = hidden.has(id);
-					const mismatchTheme = !!theme && !themes.includes(theme);
+					const activeThemeFilter = !!theme && theme !== 'Custom';
+					const mismatchTheme = activeThemeFilter && !themes.includes(theme);
 					const shouldDim = deselectedByCourse || mismatchTheme;
 					
 					/* Never fully remove hexes for deselection; just dim them */
@@ -2895,9 +3032,28 @@
 					if (!(target instanceof HTMLInputElement)) return;
 					if (target.type !== 'radio' || target.name !== 'theme') return;
 					if (!target.checked) return;
+					
+					// CRITICAL: Skip hiddenIds reset if this is a programmatic theme change from course deselection
+					const skipHiddenReset = e.detail?.skipHiddenReset;
+					if (skipHiddenReset) {
+						const v = (target.value || '').trim() || null;
+						app.state.selection.theme = v;
+						await App.Flow.deactivate('themeChange');
+						applyFilter();
+						App.UI.updateLegend(app.state.selection);
+						return;
+					}
+										
+					if (target.id === 'theme-custom') {
+						app.state.selection.theme = 'Custom';
+						// Do not touch hiddenIds here; Custom mode is managed by course checkbox events.
+						await App.Flow.deactivate('themeChange');
+						applyFilter();
+						App.UI.updateLegend(app.state.selection);
+						return;
+					}
 
 					const v = (target.value || '').trim();
-					app.state.selection.theme = v || null;
 
 					if (v) {
 						const newHidden = new Set();
@@ -2922,6 +3078,14 @@
 
 				/* Helper: any manual course selection should override/clear an active theme filter */
 				function forceNoThemeAndReflectUI(){
+					const customRadio = document.getElementById('theme-custom');
+					if (customRadio && customRadio.checked) {
+						return;
+					}
+					if (String(app.state.selection.theme || '') === 'Custom') {
+						app.state.selection.theme = null;
+						return;
+					}
 					if (app.state.selection.theme) {
 						app.state.selection.theme = null;
 						const noneRadio = document.querySelector('#themeGroup input[name="theme"][value=""]');
@@ -2958,11 +3122,17 @@
 				const selectNoneBtn = document.getElementById('coursesNoneBtn');
 
 				function setAll(checked) {
-					if (app.state.selection.theme) {
+					const noneRadio = document.getElementById('theme-none');
+					const customRadio = document.getElementById('theme-custom');
+					
+					if (checked) {
+						// Select all -> No theme / show all
 						app.state.selection.theme = null;
-						const noneRadio = document.querySelector('#themeGroup input[name="theme"][value=""]');
 						if (noneRadio) noneRadio.checked = true;
-						App.UI.updateLegend(app.state.selection);
+					} else {
+						// Deselect all -> Custom / start blank
+						app.state.selection.theme = 'Custom';
+						if (customRadio) customRadio.checked = true;
 					}
 					
 					const boxes = [...app.el.courseGroup.querySelectorAll('input[type="checkbox"]')];
@@ -2976,6 +3146,7 @@
 						else app.state.selection.hiddenIds.add(id);
 					}
 					applyFilter();
+					App.UI.updateLegend(app.state.selection);
 					try { updateCourseCount(); } catch(_) {}
 				}
 
@@ -3060,7 +3231,7 @@
 		})(App);
 
 		/* =============================================================================
-			7) Flow (sequenced activate/deactivate)
+			9) Flow (sequenced activate/deactivate)
 		============================================================================= */
 		App.Flow = (function (app) {
 			const q = [];
@@ -3197,51 +3368,8 @@
 		})(App);
 
 		/* =============================================================================
-			7.5) Actions — global reset from title
+			10) Export — as PNG (html-to-image external tool)
 		============================================================================= */
-		App.Actions = (function (app) {
-			async function resetAll(source = 'title') {
-				if (app.state.focusedId) {
-					await App.Flow.deactivate('resetAll');
-				} else {
-					App.UI.hideInfo();
-				}
-
-				app.state.selection.theme = null;
-				app.state.selection.hiddenIds.clear();
-
-				const noneRadio = document.querySelector('#themeGroup input[name="theme"][value=""]');
-				if (noneRadio) noneRadio.checked = true;
-
-				document.querySelectorAll('#courseGroup .check input[type="checkbox"]').forEach(cb => {
-					cb.checked = true;
-				});
-
-				App.Interaction.applyFilter();
-				App.Interaction.fitAll();
-				App.UI.revealDock('user');
-				App.UI.updateCenterCTA();
-			}
-
-			function bindTitle() {
-				const t = document.querySelector('.app-title');
-				if (!t) return;
-
-				t.addEventListener('click', () => { if (!App.Flow.isBusy()) resetAll('click'); });
-				t.addEventListener('keydown', (e) => {
-					if ((e.key === 'Enter' || e.key === ' ') && !App.Flow.isBusy()) {
-						e.preventDefault();
-						resetAll('key');
-					}
-				});
-			}
-
-			return { resetAll, bindTitle };
-		})(App);
-
-		/* =============================================================================
-		8) Export — as PNG (html-to-image external tool)
-		============================================================================ */
 		App.Export = (function (app) {
 		async function run() {
 			const stage = app?.el?.stage || document.querySelector('.stage');
@@ -3498,7 +3626,7 @@
 		})(App);
 
 		/* =============================================================================
-			9) Tips (driven by tipsData JSON; step count x/total; preserves order)
+			11) Tips (driven by tipsData JSON; step count x/total; preserves order)
 		============================================================================= */
 		App.Tips = (function (app) {
 			const LS_HIDE = 'cis.tips.hidden';
@@ -3632,42 +3760,14 @@
 		})(App);
 
 		/* =============================================================================
-			10) Bootstrap
+			12) Bootstrap
 		============================================================================= */
 
-		/* Force Tracks view at the earliest possible moments (fresh load + BFCache restore).
-		This prevents browser state restoration from re-checking the “Blocks” radio and
-		leaving the UI in blocks mode. */
-		function forceTracksOnBoot() {
-			try {
-				document.body.setAttribute('data-view-mode', 'tracks');
-				const tracks = document.getElementById('modeTracks');
-				const blocks = document.getElementById('modeBlocks');
-				if (tracks) tracks.checked = true;
-				if (blocks) blocks.checked = false;
-				const boxTracks = document.getElementById('legendTracks');
-				const boxBlocks = document.getElementById('legendBlocks');
-				if (boxTracks) boxTracks.hidden = false;
-				if (boxBlocks) boxBlocks.hidden = true;
-			} catch(_) {}
-		}
-		
-		/* Handle page restore from the back/forward cache (“soft refresh”). */
-		window.addEventListener('pageshow', () => {
-			forceTracksOnBoot();
-		}, { passive: true });
-
 		async function start() {
-			forceTracksOnBoot();
 			App.Domain.load();
 			App.Themes.load();
 
 			App.UI.bind();
-
-			App.state.selection = {
-				theme: Config.defaultTheme,
-				hiddenIds: new Set()
-			};
 
 			App.UI.renderThemeFilters(App.Themes.all());
 			App.UI.renderCourseSelector(App.Domain.all());
@@ -3680,7 +3780,6 @@
 
 			App.Tips.bind();
 			App.Tips.showIfAllowed();
-			App.Actions.bindTitle();
 
 			await App.Flow.initialFit();
 			App.UI.playIntro();

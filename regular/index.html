@@ -9,7 +9,7 @@
         <link rel="stylesheet" href="assets/css/style.css">
 	</head>
 
-	<body data-ui-theme="light" data-view-mode="tracks">
+	<body data-ui-theme="light">
 		<!-- =========================================================
 			APP SHELL: intro mask
 			========================================================= -->
@@ -179,22 +179,9 @@
                 </div>
                 <div class="dock__scroll" id="dockScroll" role="region" aria-label="Legend and filters">
 
-                    <!-- View mode -->
-                    <div class="dock__row mode-toggle" aria-label="Legend mode">
-                        <fieldset class="segmented" role="radiogroup" aria-label="View mode">
-                            <label>
-                                <input type="radio" name="viewMode" value="tracks" id="modeTracks" checked />
-                                <span>Tracks</span>
-                            </label>
-                            <label>
-                                <input type="radio" name="viewMode" value="blocks" id="modeBlocks" />
-                                <span>Blocks</span>
-                            </label>
-                        </fieldset>
-                    </div>
-
                     <!-- Legends -->
                     <div class="legend-grid" id="legend" aria-label="Legend and filter summary">
+                        
                         <!-- Tracks legend -->
                         <div class="legend-box" id="legendTracks" aria-label="Track colors">
                             <div class="legend-title">
@@ -224,41 +211,6 @@
                             </div>
                         </div>
 
-                        <!-- Blocks legend -->
-                        <div class="legend-box" id="legendBlocks" aria-label="Block colors" hidden>
-                            <div class="legend-title">Blocks</div>
-                            <div class="legend-tracks">
-                                <div class="legend-item">
-                                    <span class="sq bdm" aria-hidden="true"></span>
-                                    <span class="abbr">1</span>
-                                    <button type="button" class="info-btn" title="Block 1: Sept - Oct" aria-label="Block 1: Sept - Oct">
-                                    <span class="icon-info" aria-hidden="true">i</span>
-                                    </button>
-                                </div>
-                                <div class="legend-item">
-                                    <span class="sq cc" aria-hidden="true"></span>
-                                    <span class="abbr">2</span>
-                                    <button type="button" class="info-btn" title="Block 2: Nov - Jan" aria-label="Block 2: Nov - Jan">
-                                    <span class="icon-info" aria-hidden="true">i</span>
-                                    </button>
-                                </div>
-                                <div class="legend-item">
-                                    <span class="sq nmd" aria-hidden="true"></span>
-                                    <span class="abbr">3</span>
-                                    <button type="button" class="info-btn" title="Block 3: Feb - Mrt" aria-label="Block 3: Feb - Mrt">
-                                    <span class="icon-info" aria-hidden="true">i</span>
-                                    </button>
-                                </div>
-                                <div class="legend-item">
-                                    <span class="sq extra" aria-hidden="true"></span>
-                                    <span class="abbr">4</span>
-                                    <button type="button" class="info-btn" title="Block 4: Apr - Jul" aria-label="Block 4: Apr - Jul">
-                                    <span class="icon-info" aria-hidden="true">i</span>
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-
                         <!-- Theme summary -->
                         <div class="legend-box" id="legendThemeBox" aria-label="Theme summary">
                             <div class="legend-title">Theme</div>
@@ -269,6 +221,23 @@
                     <!-- Filters -->
                     <form class="controls controls--minimal" id="themeForm" aria-label="Course theme and visibility">
                         <div class="toggle-stack">
+
+                            <!-- Block visibility -->
+							<details class="collapsible pill" id="blockDetails">
+								<summary>Show blocks</summary>
+								<div class="collapsible__body">
+									<fieldset aria-label="Show blocks">
+										<legend class="sr-only">Blocks</legend>
+										<div class="group group--inline" id="blockFilterGroup">
+											<label class="chip"><input type="checkbox" name="blocks" value="1" checked><span>1</span></label>
+											<label class="chip"><input type="checkbox" name="blocks" value="2" checked><span>2</span></label>
+											<label class="chip"><input type="checkbox" name="blocks" value="3" checked><span>3</span></label>
+											<label class="chip"><input type="checkbox" name="blocks" value="4" checked><span>4</span></label>
+										</div>
+									</fieldset>
+								</div>
+							</details>
+                            
                             <!-- Theme chooser -->
                             <details class="collapsible pill" id="themeDetails">
                                 <summary>Select a theme</summary>

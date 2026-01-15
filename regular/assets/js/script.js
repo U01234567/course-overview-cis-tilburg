@@ -2,8 +2,6 @@
     0) Config
 ============================================================================= */
 const Config = {
-    defaultTheme: null,
-
     minScaleFactor: 0.25,
     maxScaleFactor: 6,
 
@@ -68,6 +66,15 @@ const Util = {
             .replace(/"/g, '&quot;')
             .replace(/'/g, '&#39;');
     },
+    
+    toast(msg, ttl = 6500) {
+        const t = document.getElementById('toast');
+        if (!t) return;
+        try { t._timer && clearTimeout(t._timer); } catch (_) {}
+        t.textContent = String(msg || '');
+        t.classList.add('is-open');
+        try { t._timer = setTimeout(() => t.classList.remove('is-open'), ttl); } catch (_) {}
+    },
 
     isLandscape() {
         return window.matchMedia('(orientation: landscape)').matches;
@@ -94,8 +101,9 @@ const App = {
         infoBiasTy: 0,
 
         selection: {
-            theme: Config.defaultTheme,
-            hiddenIds: new Set()
+            theme: null,
+            hiddenIds: new Set(),
+            blocksActive: new Set(['1','2','3','4'])
         },
 
         focusedId: null,
@@ -143,6 +151,8 @@ const App = {
 
         themeDetails: null,
         courseDetails: null,
+
+        blockFilterGroup: null,
 
         tour: null,
         tourStep: null,
@@ -592,7 +602,79 @@ App.Domain = (function () {
 })();
 
 /* =============================================================================
-    4) Themes (deduplicated)
+    4) Filters (Blocks) — state-driven, composes with other filters
+============================================================================= */
+    App.Filters = (function (app) {
+        const ALL_BLOCKS = new Set(['1','2','3','4']);
+
+        function getBlockInputs() {
+            return Array.from(document.querySelectorAll('#blockFilterGroup input[name="blocks"]'));
+        }
+
+        function readBlocksFromUI() {
+            const active = new Set();
+            for (const el of getBlockInputs()) {
+                if (el.checked) active.add(String(el.value));
+            }
+            return active;
+        }
+
+        function setAllBlockChips(checked) {
+            for (const el of getBlockInputs()) el.checked = !!checked;
+        }
+
+        function resetBlocksToAll(silent = false) {
+            setAllBlockChips(true);
+            app.state.selection.blocksActive = new Set(ALL_BLOCKS);
+            applyBlockDimming();
+            if (!silent) Util.toast('Blocks re-activated.');
+        }
+
+        function initBlockFilterUI() {
+            // Initialize default state if missing
+            if (!app.state.selection.blocksActive) {
+                app.state.selection.blocksActive = new Set(ALL_BLOCKS);
+            }
+            // Wire chip changes
+            getBlockInputs().forEach((el) => {
+                el.addEventListener('change', () => {
+                    app.state.selection.blocksActive = readBlocksFromUI();
+                    applyBlockDimming();
+                });
+            });
+            // Ensure initial application (safe if hexes are not rendered yet)
+            applyBlockDimming();
+        }
+
+        function courseMatchesActiveBlocks(course, active) {
+            // If a course has no block info, treat it as always visible.
+            const blocks = Array.isArray(course?.block) ? course.block : [];
+            if (blocks.length === 0) return true;
+            for (const b of blocks) {
+                if (active.has(String(b))) return true;
+            }
+            return false;
+        }
+
+        function applyBlockDimming() {
+            const active = app.state.selection.blocksActive || ALL_BLOCKS;
+            // Iterate rendered hexes; do not interfere with other dim reasons.
+            for (const [id, hexEl] of app.cache.hexById || []) {
+                const course = app.cache.courseById.get(id);
+                const ok = courseMatchesActiveBlocks(course, active);
+                hexEl.classList.toggle('hex--dim-block', !ok);
+            }
+        }
+
+        return {
+            initBlockFilterUI,
+            applyAll: applyBlockDimming,
+            resetBlocksToAll
+        };
+    })(App);
+
+/* =============================================================================
+    5) Themes (deduplicated)
 ============================================================================= */
 App.Themes = (function () {
     let _all = [];
@@ -641,7 +723,53 @@ App.Themes = (function () {
 })();
 
 /* =============================================================================
-    5) UI
+    6) Actions (single source of truth for resets)
+    - Avoids near-duplicate reset flows and keeps UI + state in sync.
+============================================================================= */
+App.Actions = (function (app) {
+    function resetAll({ silent = false, recenter = true } = {}) {
+        // 1) State resets
+        app.state.selection.theme = null;
+        app.state.selection.hiddenIds = new Set();
+        App.Filters.resetBlocksToAll(true); // silent toast; we'll show one consolidated toast below
+        
+        // 2) Theme UI reset
+        const themeInputs = document.querySelectorAll('#themeGroup input');
+        themeInputs.forEach((el) => { el.checked = false; });
+        if (app.el.legendTheme) app.el.legendTheme.textContent = '(none)';
+
+        // Ensure 'No theme / show all' is selected when theme is null
+        const noneThemeInput = document.getElementById('theme-none') || themeInputs[0];
+        if (noneThemeInput) {
+            noneThemeInput.checked = true;
+        }
+        
+        // 3) Course UI reset
+        const courseInputs = document.querySelectorAll('#courseGroup input[type="checkbox"]');
+        courseInputs.forEach((el) => { el.checked = true; });
+        const total = App.Domain.all().length;
+        const countEl = document.getElementById('courseCount');
+        if (countEl) countEl.textContent = `(${total} / ${total})`;
+        
+        // 4) Clear any dimming/hidden flags on tiles (theme/blocks/courses)
+        if (app.cache?.hexById) {
+            for (const [, hexEl] of app.cache.hexById) {
+                hexEl.classList.remove('hex--dim', 'hex--dim-block', 'hex--hidden', 'hex--focus');
+            }
+        }
+        App.Interaction.applyFilter();
+        
+        // 5) Recentering as part of "reset view"
+        if (recenter && app.el.centerBtn) app.el.centerBtn.click();
+        
+        if (!silent) Util.toast('Reset: blocks, themes, and courses restored.');
+    }
+    
+    return { resetAll };
+})(App);
+
+/* =============================================================================
+    7) UI
 ============================================================================= */
 App.UI = (function (app) {
     let _transformPending = false;
@@ -653,6 +781,7 @@ App.UI = (function (app) {
         app.el.workspace = document.querySelector('.workspace');
         app.el.grid = document.getElementById('hexGrid');
         app.el.appTitle = document.querySelector('.app-title');
+        app.el.blockFilterGroup = document.getElementById('blockFilterGroup');
 
         app.el.themeForm = document.getElementById('themeForm');
         app.el.centerBtn = document.getElementById('centerBtn');
@@ -692,7 +821,7 @@ App.UI = (function (app) {
         bindThemeToggle();
         bindDockControls();
         bindInfoClose();
-        bindLegendModeToggle();
+        App.Filters.initBlockFilterUI();
 
         window.addEventListener('resize', () => {
             updateDockToggleUI();
@@ -706,7 +835,34 @@ App.UI = (function (app) {
 
         updateDockToggleUI();
         updateWorkspaceReserve();
-        wireDockSwipe();
+       wireDockSwipe();
+
+        const handleResetClick = (source) => {
+            const confirmed = confirm(
+                'Reset your overview?\n\n' +
+                'This will:\n' +
+                '• Select all courses and blocks again\n' +
+                '• Deactivate any active themes\n' +
+                '• Restore the default view\n\n' +
+                'Are you sure?'
+            );
+            if (confirmed) {
+                App.Actions.resetAll();
+            }
+        };
+
+        if (app.el.resetBtn) {
+            app.el.resetBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                handleResetClick('resetBtn click');
+            });
+        }
+        if (app.el.appTitle) {
+            app.el.appTitle.addEventListener('click', (e) => {
+                e.preventDefault();
+                handleResetClick('appTitle click');
+            });
+        }
     }
 
     function initCollapsiblesInitialState() {
@@ -861,24 +1017,6 @@ App.UI = (function (app) {
         });
     }
 
-    /* Bind Tracks/Blocks mode toggle */
-    function bindLegendModeToggle(){
-        const tracks = document.getElementById('modeTracks');
-        const blocks = document.getElementById('modeBlocks');
-        const boxTracks = document.getElementById('legendTracks');
-        const boxBlocks = document.getElementById('legendBlocks');
-        function apply(mode){
-            document.body.setAttribute('data-view-mode', mode);
-            const isBlocks = (mode === 'blocks');
-            boxTracks.hidden = isBlocks;
-            boxBlocks.hidden = !isBlocks;
-        }
-        tracks?.addEventListener('change', (e)=>{ if (e.target.checked) apply('tracks'); });
-        blocks?.addEventListener('change', (e)=>{ if (e.target.checked) apply('blocks'); });
-        /* init from body attr (default: tracks) */
-        apply(document.body.getAttribute('data-view-mode') || 'tracks');
-    }
-
     function bindThemeToggle() {
         const setText = () => {
             const cur = document.body.getAttribute('data-ui-theme') || 'light';
@@ -891,6 +1029,8 @@ App.UI = (function (app) {
             const cur = document.body.getAttribute('data-ui-theme') || 'light';
             document.body.setAttribute('data-ui-theme', (cur === 'dark') ? 'light' : 'dark');
             setText();
+            App.Filters.resetBlocksToAll(true);
+            App.Filters.applyAll();
         });
 
         setText();
@@ -944,7 +1084,9 @@ App.UI = (function (app) {
             input.id = id;
             input.value = value;
 
-            const selected = (value || null) === (app.state.selection.theme || null);
+            // For empty string (No theme), treat as null for comparison
+            const normalizedValue = (value === '') ? null : value;
+            const selected = normalizedValue === app.state.selection.theme;
             if (selected) input.checked = true;
 
             const span = document.createElement('span');
@@ -954,10 +1096,53 @@ App.UI = (function (app) {
             group.appendChild(wrap);
         }
 
-        addChip('', 'No theme (show all)', 'theme-none', 'chip--none');
+        addChip('', 'No theme / show all', 'theme-none', 'chip--none');
+
+        const CUSTOM_THEME_ID = 'theme-custom';
+        addChip('Custom', 'Custom / start blank', CUSTOM_THEME_ID);
         for (const t of themes) addChip(t.id, t.label, mkId(t.id));
 
         sizeThemeList();
+
+        /* ----- Custom behaviour wiring (idempotent) ------------------------ */
+        if (!group._customHooked) {
+            group.addEventListener('change', (e) => {
+                const el = e.target;
+                if (!el || el.name !== 'theme') return;
+                if (!el.checked) return;
+                // If "Custom (start blank)" is chosen explicitly, deselect all courses
+                if (el.id === CUSTOM_THEME_ID) {
+                    e.stopImmediatePropagation();
+                    const boxes = app.el.courseGroup?.querySelectorAll('input[type="checkbox"]') || [];
+                    for (const b of boxes) {
+                        if (b.checked) {
+                            b.checked = false;
+                            b.dispatchEvent(new Event('change', { bubbles: true }));
+                        }
+                    }
+                    // Set theme to 'Custom' to distinguish from 'No theme / show all'
+                    app.state.selection.theme = 'Custom';
+                    if (app.el.legendTheme) app.el.legendTheme.textContent = 'Custom';
+                }
+            });
+            group._customHooked = true;
+        }
+        
+        // If user tweaks courses after picking any theme (or none), flip the chip to "custom"
+        if (app.el.courseGroup && !app.el.courseGroup._customHooked) {
+            app.el.courseGroup.addEventListener('change', (e) => {
+                if (!(e.target && e.target.type === 'checkbox')) return;
+                if (e && e.isTrusted === false) return;
+                const customRadio = document.getElementById(CUSTOM_THEME_ID);
+                if (customRadio && !customRadio.checked) {
+                    // Do NOT dispatch a change here — avoid re-deselecting via the handler above
+                    customRadio.checked = true;
+                    app.state.selection.theme = 'Custom';
+                    if (app.el.legendTheme) app.el.legendTheme.textContent = 'Custom';
+                }
+            });
+            app.el.courseGroup._customHooked = true;
+        }
     }
 
     function renderCourseSelector(items) {
@@ -966,7 +1151,11 @@ App.UI = (function (app) {
 
         group.innerHTML = '';
 
-        for (const v of items) {
+        const byTitle = [...items].sort((a, b) =>
+            a.title.localeCompare(b.title, undefined, { sensitivity: 'base', numeric: true })
+        );
+
+        for (const v of byTitle) {
             const id = 'course-' + v.id;
 
             const wrap = document.createElement('label');
@@ -1070,7 +1259,13 @@ App.UI = (function (app) {
 
     /* ----- Legend / Info ------------------------------------------------------ */
     function updateLegend(selection) {
-        if (app.el.legendTheme) app.el.legendTheme.textContent = selection.theme || '(none)';
+        if (!app.el.legendTheme) return;
+        const customRadio = document.getElementById('theme-custom');
+        if (customRadio && customRadio.checked) {
+            app.el.legendTheme.textContent = 'Custom';
+            return;
+        }
+        app.el.legendTheme.textContent = selection.theme || '(none)';
     }
 
     function showInfo(item) {
@@ -1429,7 +1624,7 @@ App.UI = (function (app) {
 })(App);
 
 /* =============================================================================
-    6) Interaction (pan/zoom/tap, filters, resize)
+    8) Interaction (pan/zoom/tap, filters, resize)
 ============================================================================= */
 App.Interaction = (function (app) {
     const pointers = new Map();
@@ -1587,7 +1782,8 @@ App.Interaction = (function (app) {
             const themes = themesAttr ? themesAttr.split(/\s+/) : [];
 
             const deselectedByCourse = hidden.has(id);
-            const mismatchTheme = !!theme && !themes.includes(theme);
+            const activeThemeFilter = !!theme && theme !== 'Custom';
+            const mismatchTheme = activeThemeFilter && !themes.includes(theme);
             const shouldDim = deselectedByCourse || mismatchTheme;
             
             /* Never fully remove hexes for deselection; just dim them */
@@ -1873,8 +2069,27 @@ App.Interaction = (function (app) {
             if (target.type !== 'radio' || target.name !== 'theme') return;
             if (!target.checked) return;
 
+            // CRITICAL: Skip hiddenIds reset if this is a programmatic theme change from course deselection
+            const skipHiddenReset = e.detail?.skipHiddenReset;
+            if (skipHiddenReset) {
+                const v = (target.value || '').trim() || null;
+                app.state.selection.theme = v;
+                await App.Flow.deactivate('themeChange');
+                applyFilter();
+                App.UI.updateLegend(app.state.selection);
+                return;
+            }
+                                
+            if (target.id === 'theme-custom') {
+                app.state.selection.theme = 'Custom';
+                // Do not touch hiddenIds here; Custom mode is managed by course checkbox events.
+                await App.Flow.deactivate('themeChange');
+                applyFilter();
+                App.UI.updateLegend(app.state.selection);
+                return;
+            }
+
             const v = (target.value || '').trim();
-            app.state.selection.theme = v || null;
 
             if (v) {
                 const newHidden = new Set();
@@ -1899,6 +2114,14 @@ App.Interaction = (function (app) {
 
         /* Helper: any manual course selection should override/clear an active theme filter */
         function forceNoThemeAndReflectUI(){
+            const customRadio = document.getElementById('theme-custom');
+            if (customRadio && customRadio.checked) {
+                return;
+            }
+            if (String(app.state.selection.theme || '') === 'Custom') {
+                app.state.selection.theme = null;
+                return;
+            }
             if (app.state.selection.theme) {
                 app.state.selection.theme = null;
                 const noneRadio = document.querySelector('#themeGroup input[name="theme"][value=""]');
@@ -1935,12 +2158,18 @@ App.Interaction = (function (app) {
         const selectNoneBtn = document.getElementById('coursesNoneBtn');
 
         function setAll(checked) {
-            if (app.state.selection.theme) {
+            const noneRadio = document.getElementById('theme-none');
+            const customRadio = document.getElementById('theme-custom');
+                        
+            if (checked) {
+                // Select all -> No theme / show all
                 app.state.selection.theme = null;
-                const noneRadio = document.querySelector('#themeGroup input[name="theme"][value=""]');
                 if (noneRadio) noneRadio.checked = true;
-                App.UI.updateLegend(app.state.selection);
-            }
+            } else {
+                // Deselect all -> Custom / start blank
+                app.state.selection.theme = 'Custom';
+                if (customRadio) customRadio.checked = true;
+					}
             
             const boxes = [...app.el.courseGroup.querySelectorAll('input[type="checkbox"]')];
             for (const b of boxes) {
@@ -1953,6 +2182,7 @@ App.Interaction = (function (app) {
                 else app.state.selection.hiddenIds.add(id);
             }
             applyFilter();
+            App.UI.updateLegend(app.state.selection);
             try { updateCourseCount(); } catch(_) {}
         }
 
@@ -2037,7 +2267,7 @@ App.Interaction = (function (app) {
 })(App);
 
 /* =============================================================================
-    7) Flow (sequenced activate/deactivate)
+    9) Flow (sequenced activate/deactivate)
 ============================================================================= */
 App.Flow = (function (app) {
     const q = [];
@@ -2174,51 +2404,8 @@ App.Flow = (function (app) {
 })(App);
 
 /* =============================================================================
-    7.5) Actions — global reset from title
+    10) Export — as PNG (html-to-image external tool)
 ============================================================================= */
-App.Actions = (function (app) {
-    async function resetAll(source = 'title') {
-        if (app.state.focusedId) {
-            await App.Flow.deactivate('resetAll');
-        } else {
-            App.UI.hideInfo();
-        }
-
-        app.state.selection.theme = null;
-        app.state.selection.hiddenIds.clear();
-
-        const noneRadio = document.querySelector('#themeGroup input[name="theme"][value=""]');
-        if (noneRadio) noneRadio.checked = true;
-
-        document.querySelectorAll('#courseGroup .check input[type="checkbox"]').forEach(cb => {
-            cb.checked = true;
-        });
-
-        App.Interaction.applyFilter();
-        App.Interaction.fitAll();
-        App.UI.revealDock('user');
-        App.UI.updateCenterCTA();
-    }
-
-    function bindTitle() {
-        const t = document.querySelector('.app-title');
-        if (!t) return;
-
-        t.addEventListener('click', () => { if (!App.Flow.isBusy()) resetAll('click'); });
-        t.addEventListener('keydown', (e) => {
-            if ((e.key === 'Enter' || e.key === ' ') && !App.Flow.isBusy()) {
-                e.preventDefault();
-                resetAll('key');
-            }
-        });
-    }
-
-    return { resetAll, bindTitle };
-})(App);
-
-/* =============================================================================
-8) Export — as PNG (html-to-image external tool)
-============================================================================ */
 App.Export = (function (app) {
 async function run() {
     const stage = app?.el?.stage || document.querySelector('.stage');
@@ -2475,7 +2662,7 @@ return { run };
 })(App);
 
 /* =============================================================================
-    9) Tips (driven by tipsData JSON; step count x/total; preserves order)
+    11) Tips (driven by tipsData JSON; step count x/total; preserves order)
 ============================================================================= */
 App.Tips = (function (app) {
     const LS_HIDE = 'cis.tips.hidden';
@@ -2610,33 +2797,10 @@ App.Tips = (function (app) {
 })(App);
 
 /* =============================================================================
-    10) Bootstrap
+    12) Bootstrap
 ============================================================================= */
 
-/* Force Tracks view at the earliest possible moments (fresh load + BFCache restore).
-This prevents browser state restoration from re-checking the “Blocks” radio and
-leaving the UI in blocks mode. */
-function forceTracksOnBoot() {
-    try {
-        document.body.setAttribute('data-view-mode', 'tracks');
-        const tracks = document.getElementById('modeTracks');
-        const blocks = document.getElementById('modeBlocks');
-        if (tracks) tracks.checked = true;
-        if (blocks) blocks.checked = false;
-        const boxTracks = document.getElementById('legendTracks');
-        const boxBlocks = document.getElementById('legendBlocks');
-        if (boxTracks) boxTracks.hidden = false;
-        if (boxBlocks) boxBlocks.hidden = true;
-    } catch(_) {}
-}
-
-/* Handle page restore from the back/forward cache (“soft refresh”). */
-window.addEventListener('pageshow', () => {
-    forceTracksOnBoot();
-}, { passive: true });
-
 async function start() {
-    forceTracksOnBoot();
     /* Regular build: if CIS_DATA_URLS is provided by index.html, prefetch JSON once
        and stash it on globals for the existing loaders to pick up. */
     if (window.CIS_DATA_URLS) {
@@ -2662,11 +2826,6 @@ async function start() {
 
     App.UI.bind();
 
-    App.state.selection = {
-        theme: Config.defaultTheme,
-        hiddenIds: new Set()
-    };
-
     App.UI.renderThemeFilters(App.Themes.all());
     App.UI.renderCourseSelector(App.Domain.all());
     App.UI.renderHexGrid(App.Domain.all());
@@ -2678,7 +2837,6 @@ async function start() {
 
     App.Tips.bind();
     App.Tips.showIfAllowed();
-    App.Actions.bindTitle();
 
     await App.Flow.initialFit();
     App.UI.playIntro();
