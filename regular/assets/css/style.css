@@ -253,11 +253,13 @@ body.is-moving .layer, .layer.is-measuring { transition: none !important; }
 }
 
 .hex__hit {
-    content: ""; position: absolute; top: 0; bottom: 0; left: 50%;
+    position: absolute; top: 0; bottom: 0; left: 50%;
     transform: translateX(-50%); height: 100%; width: auto;
-    aspect-ratio: 114.68 / 99.31;
-    -webkit-clip-path: polygon(25% 0,75% 0,100% 50%,75% 100%,25% 100%,0 50%);
-    clip-path: polygon(25% 0,75% 0,100% 50%,75% 100%,25% 100%,0 50%);
+    aspect-ratio: 114.68 / 99.31; z-index: 3; pointer-events: auto;
+    background: transparent; cursor: grab; --hit-inset: 0%;
+    -webkit-clip-path: polygon(calc(25% + var(--hit-inset)) 0%, calc(75% - var(--hit-inset)) 0%, 100% 50%, calc(75% - var(--hit-inset)) 100%, calc(25% + var(--hit-inset)) 100%, 0% 50%);
+    clip-path: polygon(calc(25% + var(--hit-inset)) 0%, calc(75% - var(--hit-inset)) 0%, 100% 50%, calc(75% - var(--hit-inset)) 100%, calc(25% + var(--hit-inset)) 100%, 0% 50%);
+    font-size: 0; line-height: 0;
 }
 @supports not (clip-path: polygon(0 0)) {
     .hex::before,
