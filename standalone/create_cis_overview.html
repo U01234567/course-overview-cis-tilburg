@@ -542,8 +542,13 @@
 
 		.dock__content {
 			padding: .9rem; display: grid; gap: .9rem;
-			overflow-y: auto; overflow-x: hidden; -webkit-overflow-scrolling: touch;
+			overflow: hidden; grid-template-rows: auto 1fr auto; -webkit-overflow-scrolling: touch;
 			grid-auto-rows: min-content; flex: 1 1 auto; min-height: 0; min-width: 0;
+		}
+		.dock__scroll { 
+			overflow-y: auto; overflow-x: hidden; -webkit-overflow-scrolling: touch; 
+			display: grid; gap: .9rem; grid-auto-rows: min-content; 
+			min-height: 0; 
 		}
 		.dock__row { display: flex; align-items: center; gap: .75rem; }
 		.dock__row--spread { justify-content: space-between; }
@@ -837,127 +842,130 @@
                     <h1 class="title">Controls</h1>
                     <button type="button" class="btn" id="themeToggleBtn" aria-label="Switch theme">Dark theme</button>
                 </div>
+				<div class="dock__scroll" id="dockScroll" role="region" aria-label="Legend and filters">
 
-                <!-- View mode -->
-                <div class="dock__row mode-toggle" aria-label="Legend mode">
-                    <fieldset class="segmented" role="radiogroup" aria-label="View mode">
-                        <label>
-                            <input type="radio" name="viewMode" value="tracks" id="modeTracks" checked />
-                            <span>Tracks</span>
-                        </label>
-                        <label>
-                            <input type="radio" name="viewMode" value="blocks" id="modeBlocks" />
-                            <span>Blocks</span>
-                        </label>
-                    </fieldset>
-                </div>
+					<!-- View mode -->
+					<div class="dock__row mode-toggle" aria-label="Legend mode">
+						<fieldset class="segmented" role="radiogroup" aria-label="View mode">
+							<label>
+								<input type="radio" name="viewMode" value="tracks" id="modeTracks" checked />
+								<span>Tracks</span>
+							</label>
+							<label>
+								<input type="radio" name="viewMode" value="blocks" id="modeBlocks" />
+								<span>Blocks</span>
+							</label>
+						</fieldset>
+					</div>
 
-                <!-- Legends -->
-                <div class="legend-grid" id="legend" aria-label="Legend and filter summary">
-                    <!-- Tracks legend -->
-                    <div class="legend-box" id="legendTracks" aria-label="Track colors">
-                        <div class="legend-title">
-                            Tracks
-                            <button type="button" class="legend-info" id="trackInfoBtn"
-                                aria-controls="legendTrackNames" aria-expanded="false"
-                                title="Show full track names"><span class="icon-info" aria-hidden="true">i</span></button>
-                        </div>
-                        <div class="legend-tracks">
-                            <div class="legend-item">
-                                <span class="sq bdm" aria-hidden="true"></span>
-                                <span class="abbr">BDM</span>
-                            </div>
-                            <div class="legend-item">
-                                <span class="sq cc" aria-hidden="true"></span>
-                                <span class="abbr">CC</span>
-                            </div>
-                            <div class="legend-item">
-                                <span class="sq nmd" aria-hidden="true"></span>
-                                <span class="abbr">NMD</span>
-                            </div>
-                        </div>
-                        <div class="legend-names" id="legendTrackNames" hidden>
-                            <div><strong>BDM</strong> — Business Communication &amp; Digital Media</div>
-                            <div><strong>CC</strong> — Communication &amp; Cognition</div>
-                            <div><strong>NMD</strong> — New Media Design</div>
-                        </div>
-                    </div>
+					<!-- Legends -->
+					<div class="legend-grid" id="legend" aria-label="Legend and filter summary">
+						<!-- Tracks legend -->
+						<div class="legend-box" id="legendTracks" aria-label="Track colors">
+							<div class="legend-title">
+								Tracks
+								<button type="button" class="legend-info" id="trackInfoBtn"
+									aria-controls="legendTrackNames" aria-expanded="false"
+									title="Show full track names"><span class="icon-info" aria-hidden="true">i</span></button>
+							</div>
+							<div class="legend-tracks">
+								<div class="legend-item">
+									<span class="sq bdm" aria-hidden="true"></span>
+									<span class="abbr">BDM</span>
+								</div>
+								<div class="legend-item">
+									<span class="sq cc" aria-hidden="true"></span>
+									<span class="abbr">CC</span>
+								</div>
+								<div class="legend-item">
+									<span class="sq nmd" aria-hidden="true"></span>
+									<span class="abbr">NMD</span>
+								</div>
+							</div>
+							<div class="legend-names" id="legendTrackNames" hidden>
+								<div><strong>BDM</strong> — Business Communication &amp; Digital Media</div>
+								<div><strong>CC</strong> — Communication &amp; Cognition</div>
+								<div><strong>NMD</strong> — New Media Design</div>
+							</div>
+						</div>
 
-                    <!-- Blocks legend -->
-                    <div class="legend-box" id="legendBlocks" aria-label="Block colors" hidden>
-                        <div class="legend-title">Blocks</div>
-                        <div class="legend-tracks">
-                            <div class="legend-item">
-                                <span class="sq bdm" aria-hidden="true"></span>
-                                <span class="abbr">1</span>
-                                <button type="button" class="info-btn" title="Block 1: Sept - Oct" aria-label="Block 1: Sept - Oct">
-                                <span class="icon-info" aria-hidden="true">i</span>
-                                </button>
-                            </div>
-                            <div class="legend-item">
-                                <span class="sq cc" aria-hidden="true"></span>
-                                <span class="abbr">2</span>
-                                <button type="button" class="info-btn" title="Block 2: Nov - Jan" aria-label="Block 2: Nov - Jan">
-                                <span class="icon-info" aria-hidden="true">i</span>
-                                </button>
-                            </div>
-                            <div class="legend-item">
-                                <span class="sq nmd" aria-hidden="true"></span>
-                                <span class="abbr">3</span>
-                                <button type="button" class="info-btn" title="Block 3: Feb - Mrt" aria-label="Block 3: Feb - Mrt">
-                                <span class="icon-info" aria-hidden="true">i</span>
-                                </button>
-                            </div>
-                            <div class="legend-item">
-                                <span class="sq extra" aria-hidden="true"></span>
-                                <span class="abbr">4</span>
-                                <button type="button" class="info-btn" title="Block 4: Apr - Jul" aria-label="Block 4: Apr - Jul">
-                                <span class="icon-info" aria-hidden="true">i</span>
-                                </button>
-                            </div>
-                        </div>
-                    </div>
+						<!-- Blocks legend -->
+						<div class="legend-box" id="legendBlocks" aria-label="Block colors" hidden>
+							<div class="legend-title">Blocks</div>
+							<div class="legend-tracks">
+								<div class="legend-item">
+									<span class="sq bdm" aria-hidden="true"></span>
+									<span class="abbr">1</span>
+									<button type="button" class="info-btn" title="Block 1: Sept - Oct" aria-label="Block 1: Sept - Oct">
+									<span class="icon-info" aria-hidden="true">i</span>
+									</button>
+								</div>
+								<div class="legend-item">
+									<span class="sq cc" aria-hidden="true"></span>
+									<span class="abbr">2</span>
+									<button type="button" class="info-btn" title="Block 2: Nov - Jan" aria-label="Block 2: Nov - Jan">
+									<span class="icon-info" aria-hidden="true">i</span>
+									</button>
+								</div>
+								<div class="legend-item">
+									<span class="sq nmd" aria-hidden="true"></span>
+									<span class="abbr">3</span>
+									<button type="button" class="info-btn" title="Block 3: Feb - Mrt" aria-label="Block 3: Feb - Mrt">
+									<span class="icon-info" aria-hidden="true">i</span>
+									</button>
+								</div>
+								<div class="legend-item">
+									<span class="sq extra" aria-hidden="true"></span>
+									<span class="abbr">4</span>
+									<button type="button" class="info-btn" title="Block 4: Apr - Jul" aria-label="Block 4: Apr - Jul">
+									<span class="icon-info" aria-hidden="true">i</span>
+									</button>
+								</div>
+							</div>
+						</div>
 
-                    <!-- Theme summary -->
-                    <div class="legend-box" id="legendThemeBox" aria-label="Theme summary">
-                        <div class="legend-title">Theme</div>
-                        <div class="legend-theme"><span id="legendTheme">(none)</span></div>
-                    </div>
-                </div>
+						<!-- Theme summary -->
+						<div class="legend-box" id="legendThemeBox" aria-label="Theme summary">
+							<div class="legend-title">Theme</div>
+							<div class="legend-theme"><span id="legendTheme">(none)</span></div>
+						</div>
+					</div>
 
-                <!-- Filters -->
-                <form class="controls controls--minimal" id="themeForm" aria-label="Course theme and visibility">
-                    <div class="toggle-stack">
-                        <!-- Theme chooser -->
-                        <details class="collapsible pill" id="themeDetails">
-                            <summary>Select a theme</summary>
-                            <div class="collapsible__body">
-                                <fieldset aria-label="Course theme filter">
-                                    <legend>Themes</legend>
-                                    <div class="group group--themes" id="themeGroup"></div>
-                                </fieldset>
-                            </div>
-                        </details>
+					<!-- Filters -->
+					<form class="controls controls--minimal" id="themeForm" aria-label="Course theme and visibility">
+						<div class="toggle-stack">
+							<!-- Theme chooser -->
+							<details class="collapsible pill" id="themeDetails">
+								<summary>Select a theme</summary>
+								<div class="collapsible__body">
+									<fieldset aria-label="Course theme filter">
+										<legend>Themes</legend>
+										<div class="group group--themes" id="themeGroup"></div>
+									</fieldset>
+								</div>
+							</details>
 
-                        <!-- Course visibility -->
-                        <details class="collapsible pill" id="courseDetails">
-                            <summary>Select courses <span id="courseCount">(0 / 0)</span></summary>
-                            <div class="collapsible__body">
-                                <div class="bulk-actions" role="toolbar" aria-label="Bulk selection">
-                                    <button type="button" class="btn btn--ghost btn--sm" id="coursesAllBtn">Select all</button>
-                                    <button type="button" class="btn btn--ghost btn--sm" id="coursesNoneBtn">Deselect all</button>
-                                </div>
-                                <fieldset aria-label="Select courses">
-                                    <legend>Courses</legend>
-                                    <div class="group group--courses" id="courseGroup"></div>
-                                </fieldset>
-                            </div>
-                        </details>
-                    </div>
-                </form>
+							<!-- Course visibility -->
+							<details class="collapsible pill" id="courseDetails">
+								<summary>Select courses <span id="courseCount">(0 / 0)</span></summary>
+								<div class="collapsible__body">
+									<div class="bulk-actions" role="toolbar" aria-label="Bulk selection">
+										<button type="button" class="btn btn--ghost btn--sm" id="coursesAllBtn">Select all</button>
+										<button type="button" class="btn btn--ghost btn--sm" id="coursesNoneBtn">Deselect all</button>
+									</div>
+									<fieldset aria-label="Select courses">
+										<legend>Courses</legend>
+										<div class="group group--courses" id="courseGroup"></div>
+									</fieldset>
+								</div>
+							</details>
+						</div>
+					</form>
+				</div>
 
                 <!-- Actions -->
                 <div class="dock__row dock__row--actions">
+					<a class="btn btn--ghost"href="#!" aria-label="Reset overview" id="resetBtn">Reset</a>
                     <a class="btn btn--download" href="#!" aria-label="Download" id="downloadBtn">Download as PNG</a>
                 </div>
             </div>
@@ -1149,6 +1157,7 @@
 				themeForm: null,
 				centerBtn: null,
 				downloadBtn: null,
+				resetBtn: null,
 				legendTheme: null,
 
 				infoPanel: null,
@@ -1666,9 +1675,11 @@
 				app.el.layer = document.getElementById('layer');
 				app.el.workspace = document.querySelector('.workspace');
 				app.el.grid = document.getElementById('hexGrid');
+				app.el.appTitle = document.querySelector('.app-title');
 
 				app.el.themeForm = document.getElementById('themeForm');
 				app.el.centerBtn = document.getElementById('centerBtn');
+				app.el.resetBtn = document.getElementById('resetBtn');
 				app.el.downloadBtn = document.getElementById('downloadBtn');
 
 				app.el.legendTheme = document.getElementById('legendTheme');

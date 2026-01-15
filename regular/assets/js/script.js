@@ -125,6 +125,7 @@ const App = {
         themeForm: null,
         centerBtn: null,
         downloadBtn: null,
+        resetBtn: null,
         legendTheme: null,
 
         infoPanel: null,
@@ -651,9 +652,11 @@ App.UI = (function (app) {
         app.el.layer = document.getElementById('layer');
         app.el.workspace = document.querySelector('.workspace');
         app.el.grid = document.getElementById('hexGrid');
+        app.el.appTitle = document.querySelector('.app-title');
 
         app.el.themeForm = document.getElementById('themeForm');
         app.el.centerBtn = document.getElementById('centerBtn');
+        app.el.resetBtn = document.getElementById('resetBtn');
         app.el.downloadBtn = document.getElementById('downloadBtn');
 
         app.el.legendTheme = document.getElementById('legendTheme');

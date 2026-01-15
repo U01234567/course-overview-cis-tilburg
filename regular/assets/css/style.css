@@ -531,8 +531,13 @@ body.dock-collapsed { --dock-shift: calc(100% - var(--dock-tab)); }
 
 .dock__content {
     padding: .9rem; display: grid; gap: .9rem;
-    overflow-y: auto; overflow-x: hidden; -webkit-overflow-scrolling: touch;
+    overflow: hidden; grid-template-rows: auto 1fr auto; -webkit-overflow-scrolling: touch;
     grid-auto-rows: min-content; flex: 1 1 auto; min-height: 0; min-width: 0;
+}
+.dock__scroll { 
+    overflow-y: auto; overflow-x: hidden; -webkit-overflow-scrolling: touch; 
+    display: grid; gap: .9rem; grid-auto-rows: min-content; 
+    min-height: 0; 
 }
 .dock__row { display: flex; align-items: center; gap: .75rem; }
 .dock__row--spread { justify-content: space-between; }
