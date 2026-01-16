@@ -231,6 +231,7 @@
 		.hex {
 			position: absolute; left: 50%; top: 50%;
 			width: var(--w); height: var(--h);
+			--label-inset: 7%;
 			--oddY: 0px;
 			--hex-bg: var(--fill-base);
 			--dim-o: 0;
@@ -255,10 +256,21 @@
 		.hex__svg { position: absolute; inset: 0; width: 100%; height: 100%; display: block; z-index: 0; pointer-events: none; }
 		.hex__label {
 			position: relative; z-index: 2;
-			max-width: calc(var(--flat) - 1.25rem);
-			padding: .9em 2.4em; text-align: center; line-height: 1.12;
+			max-width: calc(var(--flat) - 2.2rem);
+			padding: 1.0em 2.2em; text-align: center; line-height: 1.12;
 			font-weight: 700; font-size: .72em; color: var(--title);
 			pointer-events: none; user-select: none;
+
+			-webkit-clip-path: polygon(
+				calc(25% + var(--label-inset)) 0%,
+				calc(75% - var(--label-inset)) 0%, 
+				100% 50%,
+				calc(75% - var(--label-inset)) 100%,
+				calc(25% + var(--label-inset)) 100%,
+				0% 50%
+			);
+			clip-path: polygon(calc(25% + var(--label-inset)) 0%, calc(75% - var(--label-inset)) 0%, 100% 50%, calc(75% - var(--label-inset)) 100%, calc(25% + var(--label-inset)) 100%, 0% 50%);
+			hyphens: auto; -webkit-hyphens: auto; overflow-wrap: anywhere; word-break: normal; text-wrap: balance;
 		}
 
 		.hex__hit {
