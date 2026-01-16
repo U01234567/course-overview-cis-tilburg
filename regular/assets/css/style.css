@@ -302,6 +302,11 @@ body[data-ui-theme="dark"] .hex--dim { opacity: .14; }
 .hex--dim-block { opacity: .26; --dim-o: 1; }
 body[data-ui-theme="dark"] .hex--dim-block { opacity: .14; }
 
+body.is-exporting .hex,
+body.is-exporting .hex::after {
+    transition: none !important;
+}
+
 .hex--subdue { opacity: .45; }
 .hex--focus { filter: var(--shadow-focus-filter); z-index: 5; opacity: 1; }
 .hex--focus::before { box-shadow: 0 0 0 3px var(--title) inset; }

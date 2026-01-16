@@ -1113,6 +1113,9 @@ App.UI = (function (app) {
                 // If "Custom (start blank)" is chosen explicitly, deselect all courses
                 if (el.id === CUSTOM_THEME_ID) {
                     e.stopImmediatePropagation();
+                    // Set theme first so downstream handlers see the correct state
+                    app.state.selection.theme = 'Custom';
+                    if (app.el.legendTheme) app.el.legendTheme.textContent = 'Custom';
                     const boxes = app.el.courseGroup?.querySelectorAll('input[type="checkbox"]') || [];
                     for (const b of boxes) {
                         if (b.checked) {
@@ -1120,9 +1123,6 @@ App.UI = (function (app) {
                             b.dispatchEvent(new Event('change', { bubbles: true }));
                         }
                     }
-                    // Set theme to 'Custom' to distinguish from 'No theme / show all'
-                    app.state.selection.theme = 'Custom';
-                    if (app.el.legendTheme) app.el.legendTheme.textContent = 'Custom';
                 }
             });
             group._customHooked = true;
@@ -2091,6 +2091,10 @@ App.Interaction = (function (app) {
 
             const v = (target.value || '').trim();
 
+            // Keep selected theme in app state ('' → null for "No theme / show all")
+            app.state.selection.theme = v || null;
+            App.UI.updateLegend(app.state.selection);
+
             if (v) {
                 const newHidden = new Set();
                 for (const c of App.Domain.all()) {
@@ -2413,7 +2417,34 @@ async function run() {
     if (!stage || !grid) return;
 
     const restore = hideChrome();
+    const prevBlocksActive = new Set(app?.state?.selection?.blocksActive || []);
+    const blockInputs = Array.from(document.querySelectorAll('#blockFilterGroup input[name="blocks"]'));
+    const prevBlockChecks = new Map(blockInputs.map(el => [String(el.value), !!el.checked]));
     try {
+    if (app?.state?.selection) {
+        app.state.selection.blocksActive = new Set(['1','2','3','4']);
+    }
+    for (const el of blockInputs) el.checked = true;
+    App.Filters?.applyAll?.();
+    
+    for (const [, hexEl] of app.cache?.hexById || []) {
+        hexEl.classList.remove('hex--dim-block');
+    }
+    grid.querySelectorAll('.hex--dim-block').forEach(el => el.classList.remove('hex--dim-block'));
+    
+    for (let i = 0; i < 12; i++) {
+        await Util.nextFrame(1);
+        const hexes = Array.from(grid.querySelectorAll('.hex'))
+            .filter(h => getComputedStyle(h).display !== 'none');
+        const anyDimOrHidden = hexes.some(h =>
+            h.classList.contains('hex--dim') ||
+            h.classList.contains('hex--dim-block') ||
+            h.classList.contains('hex--hidden')
+        );
+        const allOpaque = hexes.every(h => (parseFloat(getComputedStyle(h).opacity || '1') >= 0.985));
+        if (!anyDimOrHidden && allOpaque) break;
+    }
+
     // A4 landscape, viewport-independent
     const W = 4800, H = Math.round(W / Math.SQRT2);
     const OUT = createCanvas(W, H), ctx = OUT.ctx;
@@ -2450,7 +2481,11 @@ async function run() {
 
     // Row 2 in PNG
     const row2Top = contY, row2H = Math.floor(midH - inset);
-    const fit     = Math.min(contW / cw, row2H / ch);
+    const sideGap = Math.max(8, Math.floor(contW * 0.02));
+    const sideW   = Math.max(260, Math.floor(contW * 0.32));
+    const snapW   = Math.max(1, contW - sideW - sideGap);
+    
+    const fit     = Math.min(snapW / cw, row2H / ch);
     const pr      = Math.max(2, fit * 1.6);
 
     const snapshot = await htmlToImage.toPng(stage, {
@@ -2462,12 +2497,96 @@ async function run() {
     const sx = Math.round(cx * pr), sy = Math.round(cy * pr);
     const sw = Math.round(cw * pr), sh = Math.round(ch * pr);
     const dw = Math.round(cw * fit), dh = Math.round(ch * fit);
-    const dx = contX + Math.floor((contW - dw) / 2);
+    const leftBias = Math.floor(Math.max(8, snapW * 0.03));
+    let dx = contX + Math.floor((snapW - dw) / 2) - leftBias;
+    dx = Math.max(contX, dx);
     const dy = row2Top + Math.floor((row2H - dh) / 2);
 
     const img = await loadImg(snapshot);
     ctx.imageSmoothingEnabled = true; ctx.imageSmoothingQuality = 'high';
     ctx.drawImage(img, sx, sy, sw, sh, dx, dy, dw, dh);
+
+    // Right-side list: courses per block (always show Block 1-4).
+    {
+        const listX = contX + snapW + sideGap;
+        const listY = row2Top;
+        const listW = sideW;
+        const listH = row2H;
+
+        // Panel
+        roundRect(
+            ctx,
+            listX, listY, listW, listH,
+            Math.max(12, Math.floor(listH * 0.05))
+        );
+
+        // Active courses = not hidden
+        const hidden = app?.state?.selection?.hiddenIds || new Set();
+        const active = (App.Domain.all ? App.Domain.all() : [])
+            .filter(c => c && c.id && !hidden.has(c.id));
+
+        const byBlock = { 1: [], 2: [], 3: [], 4: [] };
+        let courseNr = 1;
+        for (const c of active) {
+            const blocks = Array.isArray(c.block) ? c.block.map(v => String(v)) : [];
+            for (const b of [1,2,3,4]) {
+                if (blocks.includes(String(b))) byBlock[b].push(String(c.title || c._label || 'Untitled'));
+            }
+        }
+        for (const b of [1,2,3,4]) {
+            byBlock[b].sort((a, z) => a.localeCompare(z, undefined, { sensitivity: 'base' }));
+        }
+
+        // Typography
+        const padIn = Math.max(16, Math.floor(listW * 0.06));
+        const fsH = Math.max(14, Math.floor(titlePx * 0.30));
+        const fsI = Math.max(12, Math.floor(fsH * 0.88));
+        const gapH = Math.max(8,  Math.floor(fsI * 0.55));
+        const gapB = Math.max(12, Math.floor(fsI * 0.9));
+        const lhH = Math.floor(fsH * 1.25);
+        const lhI = Math.floor(fsI * 1.25);
+
+        let x = listX + padIn;
+        let y = listY + padIn;
+        const maxLineW = listW - padIn * 2;
+
+        ctx.save();
+        ctx.textAlign = 'start';
+        ctx.textBaseline = 'top';
+
+        for (const b of [1,2,3,4]) {
+            if (y + lhH > listY + listH - padIn) break;
+
+            // Header
+            ctx.fillStyle = css('--title', '#003366');
+            ctx.font = `800 ${fsH}px system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif`;
+            ctx.fillText(`Block ${b}`, x, y);
+            y += lhH;
+
+            // Items
+            ctx.fillStyle = css('--text', '#0d0e0e');
+            ctx.font = `${fsI}px system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif`;
+            if (typeof courseNr !== 'number') courseNr = 1;
+            if (!byBlock[b].length) {
+                if (y + lhI <= listY + listH - padIn) {
+                    ctx.fillText('—', x, y);
+                    y += lhI;
+                }
+            } else {
+                for (const t of byBlock[b]) {
+                    if (y + lhI > listY + listH - padIn) break;
+                    const line = `${courseNr}. ${t}`;
+                    ctx.fillText(ellipsizeText(ctx, line, maxLineW), x, y);
+                    y += lhI;
+                    courseNr++;
+                }
+            }
+
+            y += gapB;
+        }
+
+        ctx.restore();
+    }
 
     stroke(ctx, contX, contY, contW, contH, css('--title', '#003366'), 4);
 
@@ -2483,28 +2602,26 @@ async function run() {
 
     // Download
     triggerDownload(OUT.canvas.toDataURL('image/png'), 'CIS-overview.png');
-    } finally { restore(); }
+    } finally {
+        try {
+            if (app?.state?.selection) app.state.selection.blocksActive = prevBlocksActive;
+            for (const el of blockInputs) {
+                if (prevBlockChecks.has(String(el.value))) el.checked = prevBlockChecks.get(String(el.value));
+            }
+            App.Filters?.applyAll?.();
+            await Util.nextFrame(1);
+        } catch (_) {}
+        restore();
+    }
 }
 
 // ---------- Legend data rules ----------
 function collectLegendData(app, grid) {
-    const mode = (document.body.getAttribute('data-view-mode') || 'tracks').toLowerCase();
-    const rawTheme = (app?.state?.selection?.theme || '').toString().trim();
+    const rawTheme = (app.state.selection.theme || '').toString().trim();
     const theme = rawTheme && rawTheme.toLowerCase() !== 'all' ? rawTheme : '(none)';
     const tiles = Array.from(grid.querySelectorAll('.hex'));
     const total = tiles.length;
     const visible = tiles.filter(el => !el.classList.contains('hex--dim')).length || total;
-    if (mode === 'blocks') {
-    return {
-        heading: 'Blocks', theme, visible, total,
-        chips: [
-        { label: 'Block 1', color: css('--track-bdm', '#008fc7') },
-        { label: 'Block 2', color: css('--track-cc',  '#3c7a47') },
-        { label: 'Block 3', color: css('--track-nmd', '#ab833f') },
-        { label: 'Block 4', color: css('--track-extra', '#d22f2f') }
-        ]
-    };
-    }
     return {
     heading: 'Tracks', theme, visible, total,
     chips: [
@@ -2527,9 +2644,9 @@ async function drawTitleBar(ctx, x, y, w, h, px) {
     // Title
     ctx.fillStyle = css('--title', '#003366');
     ctx.textBaseline = 'middle';
-    ctx.font = `900 ${px}px system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif`;
+    ctx.font = `900 ${Math.floor(px * 0.9)}px system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif`;
     const titleX = x + inset + logoSize + Math.floor(logoSize * 0.4);
-    ctx.fillText('CIS Overview', titleX, centerY);
+    ctx.fillText('Personal Course Overview (CIS)', titleX, centerY);
 
     // Stamp
     ctx.font = `500 ${Math.floor(px * .34)}px system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif`;
@@ -2657,6 +2774,20 @@ function roundRect(ctx,x,y,w,h,r,fillCol,strokeCol){
 function css(name,fallback){ return getComputedStyle(document.body).getPropertyValue(name).trim() || fallback; }
 function loadImg(url){ return new Promise((res,rej)=>{ const i=new Image(); i.onload=()=>res(i); i.onerror=rej; i.src=url; }); }
 function triggerDownload(dataUrl, filename){ const a=document.createElement('a'); a.href=dataUrl; a.download=filename; document.body.appendChild(a); a.click(); a.remove(); }
+function ellipsizeText(ctx, text, maxW) {
+    const s = String(text ?? '');
+    if (ctx.measureText(s).width <= maxW) return s;
+    const ell = '…';
+    let lo = 0, hi = s.length;
+    while (lo < hi) {
+        const mid = Math.floor((lo + hi) / 2);
+        const cand = s.slice(0, mid).trimEnd() + ell;
+        if (ctx.measureText(cand).width <= maxW) lo = mid + 1;
+        else hi = mid;
+    }
+    const n = Math.max(0, lo - 1);
+    return (s.slice(0, n).trimEnd() || '').trimEnd() + ell;
+}
 
 return { run };
 })(App);
