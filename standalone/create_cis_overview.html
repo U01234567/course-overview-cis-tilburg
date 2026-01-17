@@ -147,7 +147,7 @@
 		}
 
 		.app-title {
-			position: absolute; top: 12px; right: 16px; z-index: 10020;
+			position: absolute; top: 12px; left: 16px; z-index: 10020;
 			color: var(--title); font-weight: 800; letter-spacing: .02em;
 			background: transparent; padding: .25rem .5rem; border-radius: 8px;
 			pointer-events: auto; cursor: pointer;
@@ -182,19 +182,18 @@
 			position: relative; flex: 1 1 auto; min-height: 0; overflow: hidden;
 			user-select: none; cursor: grab; border-radius: 12px;
 			background: var(--surface-2);
-			box-shadow: inset 0 1px 0 var(--inset-line);
 		}
 		.is-dragging .stage { cursor: grabbing; }
 
-		.btn--close-overview {
-			position: absolute; top: 12px; left: 12px; z-index: 10010;
-			background: var(--surface); color: var(--title);
+		.btn--osiris {
+			position: absolute; top: 12px; right: 12px; z-index: 10010;
+			background: var(--surface); color: var(--text);
 			border: 1px solid var(--border-default);
-			width: 34px; height: 34px; border-radius: 999rem;
-			display: inline-flex; align-items: center; justify-content: center;
-			text-decoration: none; box-shadow: var(--shadow-1);
-			font-size: 18px; line-height: 1;
+			box-shadow: var(--shadow-1);
+			text-decoration: none;
 		}
+		.btn--osiris:hover { background: var(--surface-2); }
+		.btn--osiris:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
 		.layer {
 			position: absolute; left: 50%; top: 50%;
@@ -600,7 +599,7 @@
 			padding: 1rem 1rem 1rem calc(1rem + 40px); display: grid; align-content: start; overflow: auto;
 		}
 		.info.is-open { transform: translateY(0); }
-		.info p { margin: 0; }
+		.info #infoText { margin: 0; }
 		@media (orientation: landscape) { .info { height: 28vh; } }
 		@media (orientation: portrait) {
 			.info { bottom: var(--dock-reserve-bottom); }
@@ -811,12 +810,14 @@
 			========================================================= -->
 		<main class="workspace" role="main" aria-label="CIS workspace">
             <section class="stage" id="stage" aria-label="Interactive hex map">
-                <a class="btn btn--close-overview"
-                    href="#!"
-                    aria-label="Close overview" title="Close">×</a>
-
                 <span class="app-title" role="button" tabindex="0"
                     aria-label="Reset view and show all courses">CIS Overview</span>
+
+				<a class="btn btn--sm btn--ghost btn--osiris"
+					id="osirisOverviewBtn"
+					href="#!"
+					target="_blank" rel="noopener"
+					aria-label="Open Osiris exam program" title="Open Osiris">Open Osiris</a>
 
                 <div class="layer" id="layer">
                     <div class="hex-grid" id="hexGrid"></div>
@@ -877,7 +878,7 @@
 						<!-- Theme summary -->
 						<div class="legend-box" id="legendThemeBox" aria-label="Theme summary">
 							<div class="legend-title">Theme</div>
-							<div class="legend-theme"><span id="legendTheme">(none)</span></div>
+							<div class="legend-theme"><span id="legendTheme">—</span></div>
 						</div>
 					</div>
 
@@ -962,7 +963,7 @@
 			========================================================= -->
 		<div class="info" id="infoPanel" aria-label="More information" aria-live="polite">
             <button type="button" class="info__close" id="infoCloseBtn" aria-label="Close details">×</button>
-            <p id="infoText">Select a course to see details here.</p>
+            <div id="infoText" class="info__body">Select a course to see details here.</div>
         </div>
 
 	<script src="https://cdnjs.cloudflare.com/ajax/libs/html-to-image/1.11.13/html-to-image.min.js" integrity="sha512-iZ2ORl595Wx6miw+GuadDet4WQbdSWS3JLMoNfY8cRGoEFy6oT3G9IbcrBeL6AfkgpA51ETt/faX6yLV+/gFJg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
@@ -1035,6 +1036,10 @@
 					.replace(/"/g, '&quot;')
 					.replace(/'/g, '&#39;');
 			},
+
+			escapeAttr(s) {
+				return Util.escapeHtml(s);
+			}, 
 
 			toast(msg, ttl = 6500) {
 				const t = document.getElementById('toast');
@@ -1585,6 +1590,53 @@
 		})();
 
 		/* =============================================================================
+			3b) OSIRIS (deep links)
+			--------------------------------------------------------------------
+			- Reads configData.start_AY to build the Osiris exam program URL
+		============================================================================= */
+		App.Osiris = (function (app) {
+            const _cache = new Map();
+            let _startAY = '2025';
+			let _configCache = null;
+
+            function loadConfig() {
+                if (_configCache) return _configCache;
+                try {
+                    const raw = document.getElementById('configData')?.textContent || '{}';
+                    const cfg = Util.parseJson(raw, 'configData', {}) || {};
+                    _startAY = String(cfg.start_AY).trim();
+                    _configCache = { startAY: _startAY };
+                } catch (e) {
+                    console.warn('[configData] Failed to parse; falling back to default.', e);
+                    _startAY = '';
+                    _configCache = { startAY: _startAY };
+                }
+                return _configCache;
+            }
+
+            function startAY() {
+                return _startAY;
+            }
+
+            function examProgramUrl() {
+                // NOTE: Tilburg CIS program example: opleiding=36500, examenprogramma=2Q319-2025
+                return `https://uvt.osiris-student.nl/onderwijscatalogus/extern/examenprogramma/36500/2Q319-${encodeURIComponent(startAY())}?taal=en`;
+            }
+
+            function applyOverviewLink() {
+                if (!app.el?.osirisOverviewBtn) return;
+                app.el.osirisOverviewBtn.href = examProgramUrl();
+            }
+
+            return {
+                loadConfig,
+                startAY,
+                examProgramUrl,
+                applyOverviewLink
+            };
+        })(App);
+
+		/* =============================================================================
             4) Filters (Blocks) — state-driven, composes with other filters
         ============================================================================= */
          App.Filters = (function (app) {
@@ -1717,7 +1769,7 @@
 				// 2) Theme UI reset
 				const themeInputs = document.querySelectorAll('#themeGroup input');
 				themeInputs.forEach((el) => { el.checked = false; });
-				if (app.el.legendTheme) app.el.legendTheme.textContent = '(none)';
+				if (app.el.legendTheme) app.el.legendTheme.textContent = '—';
 
 				// Ensure 'No theme / show all' is selected when theme is null
 				const noneThemeInput = document.getElementById('theme-none') || themeInputs[0];
@@ -1763,6 +1815,7 @@
 				app.el.grid = document.getElementById('hexGrid');
 				app.el.appTitle = document.querySelector('.app-title');
 				app.el.blockFilterGroup = document.getElementById('blockFilterGroup');
+				app.el.osirisOverviewBtn = document.getElementById('osirisOverviewBtn');
 
 				app.el.themeForm = document.getElementById('themeForm');
 				app.el.centerBtn = document.getElementById('centerBtn');
@@ -2053,7 +2106,7 @@
 
 				group.innerHTML = '';
 
-				const mkId = (s) => 'theme-' + String(s).toLowerCase().replace(/[^\w-]+/g, '-');
+				const mkId = (s) => 'theme-' + String(s).toLowerCase().replace(/[^\w-]+/g, '—');
 
 				function addChip(value, label, id, extraClass = '') {
 					const wrap = document.createElement('label');
@@ -2246,21 +2299,24 @@
 					app.el.legendTheme.textContent = 'Custom';
 					return;
 				}
-				app.el.legendTheme.textContent = selection.theme || '(none)';
+				app.el.legendTheme.textContent = selection.theme || '—';
 			}
 
 			function showInfo(item) {
 				const title = Util.escapeHtml(item.title);
-				const code = Util.escapeHtml(item.code || '-');
-				const tracks = Util.escapeHtml((item.tracks || []).join(', ') || '-');
-				const blocks = Util.escapeHtml((item.block || []).join(', ') || '-');
-				const description = Util.escapeHtml(item.description || '');
+				const code = Util.escapeHtml(item.code || '—');
+				const tracks = Util.escapeHtml((item.tracks || []).join(', ') || '—');
+				const blocks = Util.escapeHtml((item.block || []).join(', ') || '—');
+				const osirisUrl = `https://uvt.osiris-student.nl/onderwijscatalogus/extern/cursus?cursuscode=${encodeURIComponent(code)}&collegejaar=${encodeURIComponent(App.Osiris.startAY())}?taal=en`;
+				const osirisLink = `<a href="${Util.escapeAttr(osirisUrl)}" target="_blank" rel="noopener">Osiris</a>`;
+				const description = Util.escapeHtml(item.description || '—');
 
 				const html = `
 					<strong>${title} (${code})</strong>
 					<hr>
 					<strong>Track(s):</strong> ${tracks}<br>
-					<strong>Block:</strong> ${blocks}<br><br>
+					<strong>Block:</strong> ${blocks}<br>
+                    <strong>Description:</strong> (read more in ${osirisLink})<br><br>
 					${description}
 				`;
 
@@ -3599,7 +3655,7 @@
 		// ---------- Legend data rules ----------
 		function collectLegendData(app, grid) {
 			const rawTheme = (app.state.selection.theme || '').toString().trim();
-			const theme = rawTheme && rawTheme.toLowerCase() !== 'all' ? rawTheme : '(none)';
+			const theme = rawTheme && rawTheme.toLowerCase() !== 'all' ? rawTheme : '—';
 			const tiles = Array.from(grid.querySelectorAll('.hex'));
 			const total = tiles.length;
 			const visible = tiles.filter(el => !el.classList.contains('hex--dim')).length || total;
@@ -3737,7 +3793,7 @@
 		// ----- micro-utils -----
 		function hideChrome() {
 			const undo = [];
-			for (const s of ['.dock','.tour','.toast','.btn--center','.info','.btn--close-overview','.app-title']) {
+			for (const s of ['.dock','.tour','.toast','.btn--center','.info','#osirisOverviewBtn','.app-title']) {
 			const el = document.querySelector(s); if (!el) continue;
 			const d = el.style.display; el.style.display='none'; undo.push(()=>el.style.display=d);
 			}
@@ -3912,10 +3968,13 @@
 		============================================================================= */
 
 		async function start() {
+			App.Osiris.loadConfig();
 			App.Domain.load();
 			App.Themes.load();
 
 			App.UI.bind();
+
+			App.Osiris.applyOverviewLink();
 
 			App.UI.renderThemeFilters(App.Themes.all());
 			App.UI.renderCourseSelector(App.Domain.all());
@@ -3954,6 +4013,13 @@
 		}
 
 		window.addEventListener('DOMContentLoaded', start, { once: true });
+	</script>
+
+	<!-- ============================================================================
+	 	CONFIG DATA
+	 	============================================================================ -->
+	<script id="configData" type="application/json">
+		{ "start_AY": "2025" }
 	</script>
 
 	<!-- ============================================================================
@@ -4089,7 +4155,7 @@
 			"themes": ["Tech", "Brain"],
 			"code": "880003-M-6",
 			"block": ["1"],
-			"description": "-"
+			"description": ""
 		},
 		{
 			"title": "Risk Communication",
@@ -4121,7 +4187,7 @@
 			"themes": ["Brain"],
 			"code": "880004-M-6",
 			"block": ["3"],
-			"description": "-"
+			"description": ""
 		},
 		{
 			"title": "Understanding Large Language Models",

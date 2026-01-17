@@ -85,7 +85,7 @@
         "themes": ["Tech", "Brain"],
         "code": "880003-M-6",
         "block": ["1"],
-        "description": "-"
+        "description": ""
     },
     {
         "title": "Risk Communication",
@@ -117,7 +117,7 @@
         "themes": ["Brain"],
         "code": "880004-M-6",
         "block": ["3"],
-        "description": "-"
+        "description": ""
     },
     {
         "title": "Understanding Large Language Models",

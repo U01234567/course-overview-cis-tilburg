@@ -66,6 +66,10 @@ const Util = {
             .replace(/"/g, '&quot;')
             .replace(/'/g, '&#39;');
     },
+
+    escapeAttr(s) {
+        return Util.escapeHtml(s);
+    }, 
     
     toast(msg, ttl = 6500) {
         const t = document.getElementById('toast');
@@ -602,6 +606,56 @@ App.Domain = (function () {
 })();
 
 /* =============================================================================
+    3b) OSIRIS (deep links)
+    --------------------------------------------------------------------
+    - Reads configData.start_AY to build the Osiris exam program URL
+============================================================================= */
+App.Osiris = (function (app) {
+    const _cache = new Map();
+    let _startAY = '2025';
+    let _configCache = null;
+
+    function loadConfig() {
+        if (_configCache) return _configCache;
+        if (window.__CIS_CONFIG__ && typeof window.__CIS_CONFIG__ === 'object') {
+            _configCache = window.__CIS_CONFIG__;
+            _startAY = String(_configCache.start_AY || '2025').trim();
+            return _configCache;
+        }
+        try {
+            const raw = document.getElementById('configData')?.textContent || '{}';
+            _configCache = JSON.parse(raw) || {};
+            _startAY = String(_configCache.start_AY || '2025').trim();
+        } catch (e) {
+            console.warn('[configData] Failed to parse; falling back to defaults.', e);
+            _configCache = { start_AY: _startAY };
+        }
+        return _configCache;
+    }
+
+    function startAY() {
+        return _startAY;
+    }
+
+    function examProgramUrl() {
+        // NOTE: Tilburg CIS program example: opleiding=36500, examenprogramma=2Q319-2025
+        return `https://uvt.osiris-student.nl/onderwijscatalogus/extern/examenprogramma/36500/2Q319-${encodeURIComponent(startAY())}?taal=en`;
+    }
+
+    function applyOverviewLink() {
+        if (!app.el?.osirisOverviewBtn) return;
+        app.el.osirisOverviewBtn.href = examProgramUrl();
+    }
+
+    return {
+        loadConfig,
+        startAY,
+        examProgramUrl,
+        applyOverviewLink
+    };
+})(App);
+
+/* =============================================================================
     4) Filters (Blocks) — state-driven, composes with other filters
 ============================================================================= */
     App.Filters = (function (app) {
@@ -736,7 +790,7 @@ App.Actions = (function (app) {
         // 2) Theme UI reset
         const themeInputs = document.querySelectorAll('#themeGroup input');
         themeInputs.forEach((el) => { el.checked = false; });
-        if (app.el.legendTheme) app.el.legendTheme.textContent = '(none)';
+        if (app.el.legendTheme) app.el.legendTheme.textContent = '—';
 
         // Ensure 'No theme / show all' is selected when theme is null
         const noneThemeInput = document.getElementById('theme-none') || themeInputs[0];
@@ -782,6 +836,7 @@ App.UI = (function (app) {
         app.el.grid = document.getElementById('hexGrid');
         app.el.appTitle = document.querySelector('.app-title');
         app.el.blockFilterGroup = document.getElementById('blockFilterGroup');
+        app.el.osirisOverviewBtn = document.getElementById('osirisOverviewBtn');
 
         app.el.themeForm = document.getElementById('themeForm');
         app.el.centerBtn = document.getElementById('centerBtn');
@@ -1072,7 +1127,7 @@ App.UI = (function (app) {
 
         group.innerHTML = '';
 
-        const mkId = (s) => 'theme-' + String(s).toLowerCase().replace(/[^\w-]+/g, '-');
+        const mkId = (s) => 'theme-' + String(s).toLowerCase().replace(/[^\w-]+/g, '—');
 
         function addChip(value, label, id, extraClass = '') {
             const wrap = document.createElement('label');
@@ -1265,21 +1320,24 @@ App.UI = (function (app) {
             app.el.legendTheme.textContent = 'Custom';
             return;
         }
-        app.el.legendTheme.textContent = selection.theme || '(none)';
+        app.el.legendTheme.textContent = selection.theme || '—';
     }
 
     function showInfo(item) {
         const title = Util.escapeHtml(item.title);
-        const code = Util.escapeHtml(item.code || '-');
-        const tracks = Util.escapeHtml((item.tracks || []).join(', ') || '-');
-        const blocks = Util.escapeHtml((item.block || []).join(', ') || '-');
-        const description = Util.escapeHtml(item.description || '');
+        const code = Util.escapeHtml(item.code || '—');
+        const tracks = Util.escapeHtml((item.tracks || []).join(', ') || '—');
+        const blocks = Util.escapeHtml((item.block || []).join(', ') || '—');
+        const osirisUrl = `https://uvt.osiris-student.nl/onderwijscatalogus/extern/cursus?cursuscode=${encodeURIComponent(code)}&collegejaar=${encodeURIComponent(App.Osiris.startAY())}?taal=en`;
+        const osirisLink = `<a href="${Util.escapeAttr(osirisUrl)}" target="_blank" rel="noopener">Osiris</a>`;
+        const description = Util.escapeHtml(item.description || '—');
 
         const html = `
             <strong>${title} (${code})</strong>
             <hr>
             <strong>Track(s):</strong> ${tracks}<br>
-            <strong>Block:</strong> ${blocks}<br><br>
+            <strong>Block:</strong> ${blocks}<br>
+            <strong>Description:</strong> (read more in ${osirisLink})<br><br>
             ${description}
         `;
 
@@ -2618,7 +2676,7 @@ async function run() {
 // ---------- Legend data rules ----------
 function collectLegendData(app, grid) {
     const rawTheme = (app.state.selection.theme || '').toString().trim();
-    const theme = rawTheme && rawTheme.toLowerCase() !== 'all' ? rawTheme : '(none)';
+    const theme = rawTheme && rawTheme.toLowerCase() !== 'all' ? rawTheme : '—';
     const tiles = Array.from(grid.querySelectorAll('.hex'));
     const total = tiles.length;
     const visible = tiles.filter(el => !el.classList.contains('hex--dim')).length || total;
@@ -2756,7 +2814,7 @@ function drawChipsRow(ctx, x, yBaseline, chips, size) {
 // ----- micro-utils -----
 function hideChrome() {
     const undo = [];
-    for (const s of ['.dock','.tour','.toast','.btn--center','.info','.btn--close-overview','.app-title']) {
+    for (const s of ['.dock','.tour','.toast','.btn--center','.info','#osirisOverviewBtn','.app-title']) {
     const el = document.querySelector(s); if (!el) continue;
     const d = el.style.display; el.style.display='none'; undo.push(()=>el.style.display=d);
     }
@@ -2952,10 +3010,13 @@ async function start() {
         }
     }
 
+    App.Osiris.loadConfig();
     App.Domain.load();
     App.Themes.load();
 
     App.UI.bind();
+
+    App.Osiris.applyOverviewLink();
 
     App.UI.renderThemeFilters(App.Themes.all());
     App.UI.renderCourseSelector(App.Domain.all());

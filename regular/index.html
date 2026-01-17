@@ -148,12 +148,14 @@
 			========================================================= -->
 		<main class="workspace" role="main" aria-label="CIS workspace">
             <section class="stage" id="stage" aria-label="Interactive hex map">
-                <a class="btn btn--close-overview"
-                    href="#!"
-                    aria-label="Close overview" title="Close">×</a>
-
                 <span class="app-title" role="button" tabindex="0"
                     aria-label="Reset view and show all courses">CIS Overview</span>
+
+				<a class="btn btn--sm btn--ghost btn--osiris"
+					id="osirisOverviewBtn"
+					href="#!"
+					target="_blank" rel="noopener"
+					aria-label="Open Osiris exam program" title="Open Osiris">Open Osiris</a>
 
                 <div class="layer" id="layer">
                     <div class="hex-grid" id="hexGrid"></div>
@@ -214,7 +216,7 @@
                         <!-- Theme summary -->
                         <div class="legend-box" id="legendThemeBox" aria-label="Theme summary">
                             <div class="legend-title">Theme</div>
-                            <div class="legend-theme"><span id="legendTheme">(none)</span></div>
+                            <div class="legend-theme"><span id="legendTheme">—</span></div>
                         </div>
                     </div>
 
@@ -299,7 +301,7 @@
 			========================================================= -->
 		<div class="info" id="infoPanel" aria-label="More information" aria-live="polite">
             <button type="button" class="info__close" id="infoCloseBtn" aria-label="Close details">×</button>
-            <p id="infoText">Select a course to see details here.</p>
+            <div id="infoText" class="info__body">Select a course to see details here.</div>
         </div>
 	</body>
     <script>
