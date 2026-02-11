@@ -2,7 +2,7 @@
     {
         "title": "Negotiation Strategies",
         "tracks": ["BDM", "CC"],
-        "themes": ["Marketing", "Brain"],
+        "themes": ["Persuasion", "Business"],
         "code": "880460-M-6",
         "block": ["2"],
         "description": "The course will discuss the fundamentals of conflict management, negotiations, the concepts of interdependence, conflict and the creation of value, which will be viewed from the communication angle. Different strategies of negotiation, e.g. distributive and integrative bargaining, will be dealt with first. Next, the impact of cognitive, perceptual and relational variables, as well as the role of justice and ethics will be discussed within the framework of the main strategies. Social psychological factors, such as power differences, gender and culture will be studied. We will additionally focus on how mediated communication might affect the success of negotiations. Details for each of these aspects will be analyzed in the context of relevant empirical studies, discussed in the scientific articles that will be read and analyzed in addition to the book."
@@ -10,7 +10,7 @@
     {
         "title": "Roles in Networked Organizations",
         "tracks": ["BDM"],
-        "themes": ["Brain"],
+        "themes": ["Business"],
         "code": "880100-M-6",
         "block": ["3"],
         "description": "According to Shakespeare “All the world's a stage, and all the men and women merely players”. This may be particularly true for workplaces in which employees play their own roles and thereby contribute to organizational performance, group cohesion, and their own well-being. The dramaturgical metaphor is very appropriate to study organizations and organizational communication. In fact, work is often characterized as a performance, in which employees do their best to uphold certain images through their behavior and communication. Employee communication is often aimed at making a good impression on supervisors, clients, and co-workers. At the same time, employees are brand ambassadors and do their best to uphold certain corporate images, or defend corporate reputations in times of crises. Organizational communication enables role-playing, but communication is also constrained by roles. In this course, we will explore theories and empirical studies about role-playing at work that help us understand which (communication-) roles employees play, why they do so, how they do so, and how it affects their well-being, their performance, and the everyday performance of their organization. On the one hand, role-playing makes behavior predictable, and it smoothens collaboration, but on the other hand, roles cause problems in organizations (e.g., confusion, stress, and burnout) as role expectations are often ambiguous or elevated to unrealistic levels."
@@ -18,7 +18,7 @@
     {
         "title": "Interpersonal Communication",
         "tracks": ["BDM", "CC"],
-        "themes": ["Brain"],
+        "themes": ["Business", "Psychology"],
         "code": "880104-M-6",
         "block": ["2"],
         "description": "In this course you will gain knowledge about what makes interpersonal communication successful. We will focus on different communicative contexts, such as relationship formation and maintenance, leadership, health communication, negotiation, and parenting. A major focus will be on the effects of (unconscious, cognitive) psychological biases and the role of different types of media on whether and how people communicate successfully."
@@ -26,7 +26,7 @@
     {
         "title": "Resistance and Persuasion",
         "tracks": ["BDM", "CC"],
-        "themes": ["Marketing", "Brain"],
+        "themes": ["Persuasion", "Business", "Psychology"],
         "code": "880080-M-6",
         "block": ["3"],
         "description": "During this course you are provided with an in-depth overview of academic research in the fields of marketing communication and advertising, health communication, consumer behavior, social psychology, and media psychology studying the process of resistance to persuasion and become acquainted with the relevant concepts in those fields. Specifically, we discuss several theories on the different psychological processes that may explain a resistance response (i.e., psychological reactance, self-threat, and the activation of persuasion knowledge or advertising literacy), different strategies that people adopt to guard themselves against persuasive influences (e.g., counter arguing, source derogation, attitude bolstering), and strategies that influence professionals may use to overcome resistance (e.g., narrative persuasion, self-persuasion, and emotional appeals). In addition, we discuss tools that are specifically designed to help message receivers recognize persuasion attempts, which may foster resistance: sponsorship disclosures and inoculation against misinformation."
@@ -34,7 +34,7 @@
     {
         "title": "Social Media Marketing",
         "tracks": ["BDM"],
-        "themes": ["Marketing"],
+        "themes": ["Persuasion", "Business"],
         "code": "880478-M-6",
         "block": ["4"],
         "description": "During this course, we will seek the answer to this question. We will examine the current state of affairs in scientific research regarding social media marketing. What scientific knowledge is available? Of course, we will also look at the many research questions that remain. Some of these research questions will be investigated by the students themselves in this course. This way, we can expand the scientific knowledge in the field of SMM. Finally, there will also be one or more guest speakers who currently work in social media marketing and who will share their practical knowledge with the students."
@@ -42,7 +42,7 @@
     {
         "title": "Non-Verbal Communication",
         "tracks": ["CC"],
-        "themes": ["Brain"],
+        "themes": ["Psychology"],
         "code": "880206-M-6",
         "block": ["4"],
         "description": "In the course, we discuss the different forms of non-verbal communication and how these can be analyzed. Furthermore, we focus on the possible functions (both intended and unintended) of these behaviors, for instance to express emotions, whether someone is truthful or not, to partition a sentence or regulate turn taking. We will also show how people can exploit such features, for instance to compensate for language difficulties, but also for showing dominance."
@@ -50,7 +50,7 @@
     {
         "title": "Webcare & Conversational AI",
         "tracks": ["BDM", "CC"],
-        "themes": ["Tech", "Marketing"],
+        "themes": ["Business", "Tech"],
         "code": "880085-M-6",
         "block": ["1"],
         "description": "The course consists of video lectures and seminars. In the video lectures, we will dive deeper into the main topics related to webcare and (conversational) AI – related to the readings of that week. To stimulate elaboration on that week’s topic, per video lecture students will hand in their answers to weekly questions (formative assessment). These weekly questions also prepare them for the exam at the end of the elective. The on-campus seminars are highly interactive and engaging. Each week, a student team will prepare an in-class activity that matches that week’s topic. Next to that, the weekly questions will be discussed as well as relevant theories and cases from practice. The seminars also allow students to work in teams on their group assignment."
@@ -58,7 +58,7 @@
     {
         "title": "Topics in Communication & Digit. Science",
         "tracks": ["BDM", "CC", "NMD"],
-        "themes": [],
+        "themes": ["Persuasion", "Business", "Design", "Tech", "Psychology", "Health"],
         "code": "880101-M-6",
         "block": ["4"],
         "description": "Topics in Communication and Digital Science is a small-scale course (max. 16 students per theme) in which students are assigned an active role and have a say in what is discussed during the lectures. This course is therefore particularly suitable for CIS students who enjoy active, in-depth engagement with the materials, and Research Master's students. In Topics, students build scientific expertise and skills related to one specific societally relevant theme. Students will develop their oral presentation skills by creating a student-led seminar, and practice writing for a non-scientific audience. When you enroll in the Topics course via Osiris, you will be asked to select one of the four themes below. The theme you select, will be the overarching topic you will focus on for the full period of 7 weeks; you can thus not switch between the three topics during the course."
@@ -66,7 +66,7 @@
     {
         "title": "Social Media: Risks & Opportunities",
         "tracks": ["BDM", "NMD"],
-        "themes": ["Tech", "Brain"],
+        "themes": ["Health"],
         "code": "880646-M-6",
         "block": ["2"],
         "description": "In this course we will discuss our daily social media use from two perspectives: the opportunities social media offer, but also the risks that are related to social media use for individual users. Especially the risks often receive large news coverage in (inter)national press, whereas the opportunities receive less to no media attention. This can lead to feelings of concerns about the use of social media among, for instance, individual users, parents, teachers, practitioners and policy makers. Communication scholars can play a crucial role in our society by providing their expert opinion. They can guide individual users, parents, teachers, practitioners, policy makers and journalists in forming a nuanced opinion about the potential risks and opportunities of social media."
@@ -74,7 +74,7 @@
     {
         "title": "Multimodality & Visual Language",
         "tracks": ["CC"],
-        "themes": ["Tech", "Brain"],
+        "themes": ["Psychology"],
         "code": "880107-M-6",
         "block": ["2"],
         "description": "This course will primarily focus on theoretical and applied research on multimodal messages. We analyze and design various types of multimodal messages and expressions according to models and theories of language, graphics, and multimodality. As many of these theories are still in development, students will be challenged to both learn and contribute to theory-building and application."
@@ -82,7 +82,7 @@
     {
         "title": "Data & (Mis)information",
         "tracks": ["BDM", "CC", "NMD"],
-        "themes": ["Tech", "Brain"],
+        "themes": ["Tech", "Psychology", "Health"],
         "code": "880003-M-6",
         "block": ["1"],
         "description": ""
@@ -90,7 +90,7 @@
     {
         "title": "Risk Communication",
         "tracks": ["BDM", "CC", "NMD"],
-        "themes": ["Marketing", "Brain"],
+        "themes": ["Persuasion", "Business", "Psychology", "Health"],
         "code": "880666-M-6",
         "block": ["4"],
         "description": "In this course, you will explore key theories and concepts in the field of risk and uncertainty communication. Topics include the psychology of risk perception, strategic and media risk communication, formats for communicating probability, the impact of uncertainty on trust and decision-making, and the role of individual differences such as numeracy, graph literacy, and cultural orientation. You will also learn to critically assess real-world risk communication efforts in areas like health, the environment, and technology, and apply practical, evidence-based strategies to avoid common pitfalls and enhance the effectiveness of risk communications."
@@ -98,7 +98,7 @@
     {
         "title": "Digital Health Communication",
         "tracks": ["BDM", "CC", "NMD"],
-        "themes": ["Tech", "Brain"],
+        "themes": ["Persuasion", "Design", "Tech", "Health"],
         "code": "800872-M-6",
         "block": ["3"],
         "description": "In this course, you will learn about the main theories, technologies, and methods that are relevant for design, adoption, and effects of (persuasive) digital health communication. Topics that will be discussed include characteristics of users, affordances and design of technology, and the effects of digital technologies on (health) outcomes. Topics will be illustrated with recent examples of implementations of health communication technology, such as games, mobile health apps, and virtual reality applications. In the assignments of this course, you will apply the knowledge to design and evaluate a theory- and evidence-based digital health application."
@@ -106,7 +106,7 @@
     {
         "title": "Digital Inequality",
         "tracks": ["BDM", "NMD"],
-        "themes": ["Tech"],
+        "themes": ["Tech", "Health"],
         "code": "880103-M-6",
         "block": ["3"],
         "description": "There is a lot of hope placed in digital technologies to democratize participation in the economy, politics, education, and culture. But how equal is our digital society? What shapes who is seen and who benefits, and who is left out or penalized? In this course, we examine the differences that have emerged between groups in terms of who benefits (and who does not) from the rise of smartphones, social media, big data, and other digital innovations in the 21st century. We discuss the historical context for digital inequality and some theoretical frameworks, before turning to recent research on topics such as health, education, politics, AI, gig work, and political participation. Note: We may adapt these topics to stay relevant to social and technological changes. We will look at how inequalities emerge around broad differences in society such as gender, age, and income, and explore case studies of particular populations who are experiencing and adapting to digital changes. We will also look at macro/structural issues related to digital inequalities at a global scale, such as data colonialism and dominance over internet/platform governance."
@@ -114,7 +114,7 @@
     {
         "title": "Taalkennis",
         "tracks": ["CC"],
-        "themes": ["Brain"],
+        "themes": ["Psychology"],
         "code": "880004-M-6",
         "block": ["3"],
         "description": ""
@@ -122,7 +122,7 @@
     {
         "title": "Understanding Large Language Models",
         "tracks": ["CC", "NMD"],
-        "themes": ["Tech", "Brain"],
+        "themes": ["Tech", "Psychology"],
         "code": "880643-M-6",
         "block": ["1"],
         "description": "Throughout the course, students will explore the architecture behind LLMs and compare them to cognitive models of human language processing. On the one hand, understanding human cognition is essential for making usable language technology. One the other hand, LLMs also provide new tools, methods, and frameworks that human cognition could not offer. In addition, LLMs may by seeming human, while working in a non-human way, posit new risks to human society."
@@ -130,7 +130,7 @@
     {
         "title": "Climate Communication",
         "tracks": ["BDM", "CC", "NMD"],
-        "themes": ["Marketing", "Brain"],
+        "themes": ["Health"],
         "code": "880102-M-6",
         "block": ["2"],
         "description": "Climate change is one of the most pressing issues of our time. In this course, we critically examine the dominant and persisting narratives that currently shape climate communication, such as the anthropocene perspective (‘humans are central’), the capitalist perspective, and the apocalyptic perspective. While challenging, students taking this course are invited to break out of existing structures and develop well-informed, new narratives and perspectives: if audiences can imagine better what a sustainable future may look like, it could make climate change communication more successful."
@@ -138,7 +138,7 @@
     {
         "title": "Digital Food Marketing",
         "tracks": ["BDM", "NMD"],
-        "themes": ["Marketing", "Tech"],
+        "themes": ["Persuasion", "Business", "Psychology", "Health"],
         "code": "880099-M-6",
         "block": ["1"],
         "description": "The course consists of two main parts; (1) a theoretical part with lectures and a written exam, and (2) an empirical part with working groups, final report and presentation of the results. During the lectures, different forms of food marketing techniques and their effectiveness will be discussed, theoretical models explaining the psychology of food marketing and consumption and eating behavior will be presented, and methodologies to test and analyze food marketing techniques will be explained. During most lectures, there will also be room to bring the theory into practice, as students will conduct an empirical study in close collaboration with a company/organization, supervised by one of the teachers."
@@ -146,7 +146,7 @@
     {
         "title": "Emerging Technologies for Learning",
         "tracks": ["CC", "NMD"],
-        "themes": ["Tech", "Brain"],
+        "themes": ["Design", "Tech", "Psychology"],
         "code": "880016-M-6",
         "block": ["3"],
         "description": "The goal of the course is to provide you with a thorough understanding of the main concepts involved in learning, and how emerging technologies can be leveraged to support these concepts. We will explore how we could potentially benefit from these technologies in education, but also examine potential barriers or pitfalls that could stand in the way of a successful implementation. The content covered in this course is relevant for students who are interested in learning processes and how emerging technologies can support these, in the field of formal education as well as other domains where learning is important."
@@ -154,7 +154,7 @@
     {
         "title": "The Human Mind in the Digital World",
         "tracks": ["CC", "NMD"],
-        "themes": ["Brain", "Tech"],
+        "themes": ["Tech", "Psychology"],
         "code": "880672-M-6",
         "block": ["1"],
         "description": "The main goal of this course on ‘the human mind in the digital world’ is to explore and understand a) how insights about the workings of the human mind are (and can be) exploited in the design of the digital world, and b) how operating in the digital world affects – in both immediate and a more sustained manner – the workings of the human mind. We will be drawing from the fields of cognitive psychology, cognitive neuroscience, media psychology, and communication science, in order to learn about the interplay between human cognition and digital technology."
@@ -162,7 +162,7 @@
     {
         "title": "Responsible UX Design",
         "tracks": ["NMD"],
-        "themes": ["Tech", "Marketing", "Brain"],
+        "themes": ["Design", "Tech", "Health"],
         "code": "880671-M-6",
         "block": ["2"],
         "description": "In this course, you will learn how to integrate core ethical principles and theories in the responsible design of new media products, while exploring what happens when such concerns are neglected, or even flouted. You will discuss and interrogate ethical concerns and value clashes as they relate to topical issues in society and specific design practices, all the while developing and reifying your own ethical positions. You will also design and critique your own speculative new media product as a way of exposing and reflecting on problematic creations and designs that cause harm. The goal of this course is not to dictate what you should think or believe with respect to the design of responsible interactive systems, but rather to help you define your own ethical positions and processes for making responsible design decisions."
@@ -170,7 +170,7 @@
     {
         "title": "Interactive Storytelling",
         "tracks": ["CC", "NMD"],
-        "themes": ["Marketing", "Tech"],
+        "themes": ["Persuasion", "Design", "Tech", "Health"],
         "code": "822034-M-6",
         "block": ["4"],
         "description": "In this course, you become acquainted with (interactive) narratives, stories and storytelling and with the experience and effects of (interactive) narratives. You explore interactive storytelling in, for example, journalism, health communication and education and discuss how interactivity can be used in storytelling in a meaningful, responsible way. You do so through exploring scientific literature but also through analyzing a professional strategic interactive narrative and creating and publishing your own interactive digital narrative about a societally relevant topic."
@@ -178,7 +178,7 @@
     {
         "title": "Psychology of Creativity",
         "tracks": ["NMD"],
-        "themes": ["Brain", "Tech"],
+        "themes": ["Design", "Psychology"],
         "code": "880013-M-6",
         "block": ["4"],
         "description": "Creativity is essential in today’s fast-paced and innovation-driven world, whether in designing products, solving complex problems, or developing persuasive campaigns. But what psychological processes underlie the generation of truly original and effective ideas? In this course, we explore the psychology of creativity: how people generate ideas, solutions, and products that are novel yet also appropriate. Drawing on current research in cognitive, motivation, emotion, and social psychology, we will examine the mechanisms that support, hinder, or enhance creative thinking. The course also engages with the \"third wave\" of creativity research, which investigates how digital technologies affect human creativity."

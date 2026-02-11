@@ -1,5 +1,8 @@
 [
-    { "id": "Tech",      "label": "Tech",      "order": 1 },
-    { "id": "Marketing", "label": "Marketing", "order": 2 },
-    { "id": "Brain",     "label": "Brain",     "order": 3 }
+    { "id": "Persuasion", "label": "Communication and persuasion",             "order": 1 },
+    { "id": "Business",   "label": "Business communication",                   "order": 2 },
+    { "id": "Design",     "label": "Creative media & design",                  "order": 3 },
+    { "id": "Tech",       "label": "Communication and technology",             "order": 4 },
+    { "id": "Psychology", "label": "Psychology of language and communication", "order": 5 },
+    { "id": "Health",     "label": "Communication for health and wellbeing",   "order": 6 }
 ]
