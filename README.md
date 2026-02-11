@@ -16,8 +16,8 @@ This README and documentation are tailored to non-technical staff (e.g., program
 **Option A — Standalone (easiest to open)**
 
 1. Download the repo as ZIP (Code → Download ZIP).
-2. Open `standalone/create_cis_overview.html` in your browser.
-3. Share `create_cis_overview.html` with students or host it on your server.
+2. Open `standalone/cis-course-overview.html` in your browser.
+3. Share `cis-course-overview.html` with students or host it on your server.
 
 **Option B — Regular (more intuitive to edit)**
 
@@ -42,7 +42,7 @@ Why a server? Browsers block `fetch()` for `file://` URLs. Serving over `http://
 ```
 cis-course-map/
 ├─ standalone/
-│  └─ create_cis_overview.html
+│  └─ cis-course-overview.html
 ├─ regular/
 │  ├─ index.html
 │  ├─ assets/
@@ -63,7 +63,7 @@ cis-course-map/
 You can choose the simple “one file” route or the modular JSON route. The data fields are the same in both.
 
 **A) Standalone**
-Open `standalone/create_cis_overview.html` in a text editor. Scroll to the DATA section at the end and edit:
+Open `standalone/cis-course-overview.html` in a text editor. Scroll to the DATA section at the end and edit:
 
 * `coursesData` — list of courses to display
 * `themesData` — list of theme names (and optional order)
