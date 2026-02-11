@@ -1,6 +1,6 @@
 # Course Overview CIS (Tilburg University)
 
-Interactive, mobile-first visual of all MSc Communication and Information Sciences (CIS) courses (Tilburg University). Explore by Track or Block, filter by theme or individual courses, and tap hexagons for details. Includes a short guided tour for users and export of their tailored course overview.
+Interactive, mobile-first visual of all MSc Communication and Information Sciences (CIS) courses (Tilburg University). Explore by Track, filter by block, theme, or individual courses, and tap hexagons for details. Includes a short guided tour for users and export of their tailored course overview.
 
 # Who this is for
 
@@ -49,6 +49,7 @@ cis-course-map/
 │  │  ├─ css/style.css
 │  │  └─ js/script.js
 │  └─ data/
+│     ├─ config.json
 │     ├─ courses.json
 │     ├─ themes.json
 │     ├─ overview.json
@@ -65,6 +66,7 @@ You can choose the simple “one file” route or the modular JSON route. The da
 **A) Standalone**
 Open `standalone/cis-course-overview.html` in a text editor. Scroll to the DATA section at the end and edit:
 
+* `configData` — first year of the curriculum you want to display
 * `coursesData` — list of courses to display
 * `themesData` — list of theme names (and optional order)
 * `overviewData` — optional fixed layouts per total number of courses
@@ -73,6 +75,7 @@ Open `standalone/cis-course-overview.html` in a text editor. Scroll to the DATA 
 **B) Regular**
 Edit the JSON files under `regular/data/`:
 
+* `config.json` — first year of the curriculum you want to display
 * `courses.json` — list of courses to display
 * `themes.json` — list of theme names (and optional order)
 * `overview.json` — optional fixed layouts per total number of courses
@@ -220,10 +223,9 @@ If no pattern is set for the current number of courses, the app auto-layouts.
 * The app supports light/dark theme toggle.
 * "Download as PNG" uses a high-quality A4-landscape layout.
 
-# Using the interface (quick recap)
+# Using the interface
 
-* Switch Tracks vs Blocks via the segmented control.
-* Filter by Theme or toggle individual courses.
+* Filter by Block, Theme, or toggle individual courses.
 * Click a hex for details; click again or press Esc to close.
 * Use “Center” to reset the view.
 * Use Download as PNG for a printable / shareable image.
@@ -259,4 +261,4 @@ If no pattern is set for the current number of courses, the app auto-layouts.
 
 # Maintenance
 
-Please update `courses.json` (or the standalone DATA section) each academic year, and optionally adjust `overview.json` if you want a fixed layout for the current course count.
+Please update `courses.json` (or the standalone DATA section) and `config.json` each academic year to keep the curriculum up-to-date, and optionally adjust `overview.json` if you want a fixed layout for the current course count.
