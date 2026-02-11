@@ -2676,7 +2676,15 @@ async function run() {
 // ---------- Legend data rules ----------
 function collectLegendData(app, grid) {
     const rawTheme = (app.state.selection.theme || '').toString().trim();
-    const theme = rawTheme && rawTheme.toLowerCase() !== 'all' ? rawTheme : '—';
+    let theme = '—';
+    if (rawTheme && rawTheme.toLowerCase() !== 'all') {
+        if (rawTheme === 'Custom') {
+            theme = 'Custom';
+        } else {
+            const t = (App.Themes?.all ? App.Themes.all() : []).find(v => String(v.id) === rawTheme);
+            theme = (t && t.label) ? t.label : rawTheme;
+        }
+    }
     const tiles = Array.from(grid.querySelectorAll('.hex'));
     const total = tiles.length;
     const visible = tiles.filter(el => !el.classList.contains('hex--dim')).length || total;
@@ -2754,8 +2762,10 @@ function drawLegendCardCentered(ctx, x, y, w, h, data, basePx) {
 
     // Base metrics
     const pad = Math.max(24, Math.floor(basePx * 1.2));
-    const colGap = Math.max(pad, Math.floor(w * .04));
-    const colW = Math.floor((w - 2*pad - colGap) / 2);
+    const colGap = Math.max(Math.floor(pad * 0.6), Math.floor(w * 0.02));
+    const innerW = Math.max(1, w - 2*pad - colGap);
+    const leftW  = Math.floor(innerW * 0.30);
+    const rightW = innerW - leftW;
     const fsHead = Math.floor(basePx * 1.2);
     const fsLbl  = Math.floor(basePx * 1.2);
     const chipSz = Math.floor(basePx * .95);
@@ -2774,23 +2784,29 @@ function drawLegendCardCentered(ctx, x, y, w, h, data, basePx) {
     const chipsTop = cy + fsHead + gapA + Math.floor(chipSz * 0.75);
     drawChipsRow(ctx, cx, chipsTop, data.chips, chipSz);
 
-    cx = x + pad + colW + colGap; cy = vy;
+    cx = x + pad + leftW + colGap; cy = vy;
     const txt = css('--text', '#0d0e0e');
     const titleC = css('--title', '#003366');
     ctx.fillStyle = titleC;
     ctx.font = `800 ${fsLbl}px system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif`;
     ctx.fillText('Theme', cx, cy + fsLbl);
+    const labelPad = Math.max(10, Math.floor(basePx * 0.55));
+    const labelW = Math.max(ctx.measureText('Theme').width, ctx.measureText('Courses').width);
+    const valueX = cx + Math.ceil(labelW + labelPad);
+    const rightEdge = x + pad + leftW + colGap + rightW;
+    
     ctx.fillStyle = txt;
     ctx.font = `${fsLbl}px system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif`;
-    ctx.fillText(String(data.theme), cx + Math.floor(colW * 0.35), cy + fsLbl);
-
+    const valueMaxW = Math.max(20, rightEdge - valueX);
+    ctx.fillText(ellipsizeText(ctx, String(data.theme), valueMaxW), valueX, cy + fsLbl);
+    
     ctx.fillStyle = titleC;
     ctx.font = `800 ${fsLbl}px system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif`;
     const cy2 = cy + fsLbl + gapB;
     ctx.fillText('Courses', cx, cy2 + fsLbl);
     ctx.fillStyle = txt;
     ctx.font = `${fsLbl}px system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif`;
-    ctx.fillText(`${data.visible} / ${data.total}`, cx + Math.floor(colW * 0.35), cy2 + fsLbl);
+    ctx.fillText(ellipsizeText(ctx, `${data.visible} / ${data.total}`, valueMaxW), valueX, cy2 + fsLbl);
 }
 
 function drawChipsRow(ctx, x, yBaseline, chips, size) {
