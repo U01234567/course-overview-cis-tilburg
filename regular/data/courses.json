@@ -154,7 +154,7 @@
     {
         "title": "The Human Mind in the Digital World",
         "tracks": ["CC", "NMD"],
-        "themes": ["Tech", "Psychology"],
+        "themes": ["Design", "Tech", "Psychology"],
         "code": "880672-M-6",
         "block": ["1"],
         "description": "The main goal of this course on ‘the human mind in the digital world’ is to explore and understand a) how insights about the workings of the human mind are (and can be) exploited in the design of the digital world, and b) how operating in the digital world affects – in both immediate and a more sustained manner – the workings of the human mind. We will be drawing from the fields of cognitive psychology, cognitive neuroscience, media psychology, and communication science, in order to learn about the interplay between human cognition and digital technology."
