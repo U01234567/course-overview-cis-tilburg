@@ -1320,7 +1320,13 @@ App.UI = (function (app) {
             app.el.legendTheme.textContent = 'Custom';
             return;
         }
-        app.el.legendTheme.textContent = selection.theme || '—';
+        const rawTheme = (selection.theme || '').toString().trim();
+        let themeText = '—';
+        if (rawTheme && rawTheme.toLowerCase() !== 'all') {
+            const t = (App.Themes?.all ? App.Themes.all() : []).find(v => String(v.id) === rawTheme);
+            themeText = (t && t.label) ? t.label : rawTheme;
+        }
+        app.el.legendTheme.textContent = themeText;
     }
 
     function showInfo(item) {
