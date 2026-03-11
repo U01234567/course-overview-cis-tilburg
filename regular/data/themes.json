@@ -1,8 +1,9 @@
 [
-    { "id": "Persuasion", "label": "Communication and persuasion",             "order": 1 },
-    { "id": "Business",   "label": "Business communication",                   "order": 2 },
-    { "id": "Design",     "label": "Creative media & design",                  "order": 3 },
-    { "id": "Tech",       "label": "Communication and technology",             "order": 4 },
-    { "id": "Psychology", "label": "Psychology of language and communication", "order": 5 },
-    { "id": "Health",     "label": "Communication for health and wellbeing",   "order": 6 }
+    { "id": "Persuasion",      "label": "Persuasion",            "order": 1 },
+    { "id": "Organizations",   "label": "Organizations",         "order": 2 },
+    { "id": "Design",          "label": "Design",                "order": 3 },
+    { "id": "Tech",            "label": "Technology",            "order": 4 },
+    { "id": "Psychology",      "label": "Psychology",            "order": 5 },
+    { "id": "Language",        "label": "Language",              "order": 6 },
+    { "id": "Health",          "label": "Health & Well-being",   "order": 7 }
 ]
