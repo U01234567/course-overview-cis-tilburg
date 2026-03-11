@@ -53,7 +53,7 @@
         "themes": ["Business", "Tech"],
         "code": "880085-M-6",
         "block": ["1"],
-        "description": "The course consists of video lectures and seminars. In the video lectures, we will dive deeper into the main topics related to webcare and (conversational) AI – related to the readings of that week. To stimulate elaboration on that week’s topic, per video lecture students will hand in their answers to weekly questions (formative assessment). These weekly questions also prepare them for the exam at the end of the elective. The on-campus seminars are highly interactive and engaging. Each week, a student team will prepare an in-class activity that matches that week’s topic. Next to that, the weekly questions will be discussed as well as relevant theories and cases from practice. The seminars also allow students to work in teams on their group assignment."
+        "description": "Webcare is the act of monitoring and engaging in online conversations with (potential) customers by organizations, mostly through social media. Webcare serves three organizational goals: customer service (i.e., answering questions of individual customers), reputation management (i.e., preventing an issue leads to an organizational crisis), and marketing (i.e., improving the organization’s products or services on the basis of customers’ feedback). Nowadays, organizations also explore the opportunities of (conversational) AI for these three purposes, for example to manage the great amount of customer service questions."
     },
     {
         "title": "Topics in Communication & Digit. Science",
@@ -85,7 +85,7 @@
         "themes": ["Tech", "Psychology", "Health"],
         "code": "880003-M-6",
         "block": ["1"],
-        "description": ""
+        "description": "In this course, topical issues related to mis- and disinformation are discussed, such as fallacious reasoning, the portrayal of distorted visuals, conspiracy theories as well as the psychology behind accepting, resisting, and preventing (dis)information. The knowledge is applied by critically evaluating real-life cases of mis- and disinformation and by suggesting viable strategies to counter them."
     },
     {
         "title": "Risk Communication",
@@ -117,7 +117,7 @@
         "themes": ["Psychology"],
         "code": "880004-M-6",
         "block": ["3"],
-        "description": ""
+        "description": "Language skills develop throughout life. A lot of research into the growth of language knowledge looks at (young) children, but also in secondary school and after that your language knowledge grows: you not only learn more words, but also new ways of using language, such as reading and writing more complex texts, argumentation structure, etc. Moreover, knowledge about language is also developing: the metalinguistic consciousness. This course focuses on the later development of language knowledge."
     },
     {
         "title": "Understanding Large Language Models",
