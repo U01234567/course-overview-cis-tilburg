@@ -1151,11 +1151,11 @@ App.UI = (function (app) {
             group.appendChild(wrap);
         }
 
-        addChip('', 'No theme / show all', 'theme-none', 'chip--none');
-
+        addChip('', 'Show all', 'theme-none', 'chip--none');
+        
         const CUSTOM_THEME_ID = 'theme-custom';
-        addChip('Custom', 'Custom / start blank', CUSTOM_THEME_ID);
         for (const t of themes) addChip(t.id, t.label, mkId(t.id));
+        addChip('Custom', 'Custom / start blank', CUSTOM_THEME_ID);
 
         sizeThemeList();
 

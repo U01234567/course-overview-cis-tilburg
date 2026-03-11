@@ -2130,11 +2130,11 @@
 					group.appendChild(wrap);
 				}
 
-				addChip('', 'No theme / show all', 'theme-none', 'chip--none');
+				addChip('', 'Show all', 'theme-none', 'chip--none');
 
 				const CUSTOM_THEME_ID = 'theme-custom';
-				addChip('Custom', 'Custom / start blank', CUSTOM_THEME_ID);
 				for (const t of themes) addChip(t.id, t.label, mkId(t.id));
+				addChip('Custom', 'Custom / start blank', CUSTOM_THEME_ID);
 
 				sizeThemeList();
 
@@ -2544,7 +2544,7 @@
 					const cs = getComputedStyle(group);
 					const gap = parseFloat(cs.rowGap || cs.gap || '8');
 
-					const target = (r.height * 3.8) + (gap * 2.0);
+					const target = (r.height * 5.8) + (gap * 4.0);
 					group.style.maxHeight = `${target}px`;
 					group.style.paddingBottom = `${gap * 0.25}px`;
 					updateWorkspaceReserve();
