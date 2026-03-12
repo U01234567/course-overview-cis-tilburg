@@ -659,44 +659,82 @@ App.Osiris = (function (app) {
     4) Filters (Blocks) — state-driven, composes with other filters
 ============================================================================= */
     App.Filters = (function (app) {
-        const ALL_BLOCKS = new Set(['1','2','3','4']);
-
+        const ALL_BLOCK_VALUES = ['1','2','3','4'];
+        const ALL_BLOCKS = new Set(ALL_BLOCK_VALUES);
+        
         function getBlockInputs() {
             return Array.from(document.querySelectorAll('#blockFilterGroup input[name="blocks"]'));
         }
-
-        function readBlocksFromUI() {
-            const active = new Set();
-            for (const el of getBlockInputs()) {
-                if (el.checked) active.add(String(el.value));
+        
+        function normalizeBlocks(active) {
+            const next = new Set();
+            for (const value of (active || [])) {
+                const block = String(value);
+                if (ALL_BLOCKS.has(block)) next.add(block);
             }
-            return active;
+            return next;
         }
-
-        function setAllBlockChips(checked) {
-            for (const el of getBlockInputs()) el.checked = !!checked;
+        
+        function isAllBlocksActive(active) {
+            const normalized = normalizeBlocks(active);
+            return (
+                normalized.size === ALL_BLOCK_VALUES.length &&
+                ALL_BLOCK_VALUES.every((block) => normalized.has(block))
+            );
         }
-
+        
+        function syncBlockUI(active) {
+            const normalized = normalizeBlocks(active);
+            for (const el of getBlockInputs()) {
+                el.checked = normalized.has(String(el.value));
+            }
+        }
+        
+        function setActiveBlocks(active, { apply = true } = {}) {
+            const normalized = normalizeBlocks(active);
+            app.state.selection.blocksActive = normalized;
+            syncBlockUI(normalized);
+            if (apply) applyBlockDimming();
+            return normalized;
+        }
+        
+        function getNextBlocksAfterUserClick(clickedValue) {
+            const clicked = String(clickedValue);
+            const prevActive = normalizeBlocks(app.state.selection.blocksActive || ALL_BLOCKS);
+            
+            // Rule 1: all active -> isolate clicked block
+            if (isAllBlocksActive(prevActive)) {
+                return new Set([clicked]);
+            }
+            
+            // Rule 2: not all active -> toggle clicked block
+            if (prevActive.has(clicked)) {
+                prevActive.delete(clicked);
+            } else {
+                prevActive.add(clicked);
+            }			
+            return prevActive;
+        }
+        
         function resetBlocksToAll(silent = false) {
-            setAllBlockChips(true);
-            app.state.selection.blocksActive = new Set(ALL_BLOCKS);
-            applyBlockDimming();
+            setActiveBlocks(ALL_BLOCK_VALUES, { apply: true });
             if (!silent) Util.toast('Blocks re-activated.');
         }
-
+        
         function initBlockFilterUI() {
-            // Initialize default state if missing
             if (!app.state.selection.blocksActive) {
                 app.state.selection.blocksActive = new Set(ALL_BLOCKS);
             }
-            // Wire chip changes
+            
+            syncBlockUI(app.state.selection.blocksActive);
+            
             getBlockInputs().forEach((el) => {
                 el.addEventListener('change', () => {
-                    app.state.selection.blocksActive = readBlocksFromUI();
-                    applyBlockDimming();
+                    const nextActive = getNextBlocksAfterUserClick(el.value);
+                    setActiveBlocks(nextActive, { apply: true });
                 });
             });
-            // Ensure initial application (safe if hexes are not rendered yet)
+            
             applyBlockDimming();
         }
 
@@ -723,7 +761,8 @@ App.Osiris = (function (app) {
         return {
             initBlockFilterUI,
             applyAll: applyBlockDimming,
-            resetBlocksToAll
+            resetBlocksToAll,
+            setActiveBlocks
         };
     })(App);
 
@@ -2482,19 +2521,9 @@ async function run() {
 
     const restore = hideChrome();
     const prevBlocksActive = new Set(app?.state?.selection?.blocksActive || []);
-    const blockInputs = Array.from(document.querySelectorAll('#blockFilterGroup input[name="blocks"]'));
-    const prevBlockChecks = new Map(blockInputs.map(el => [String(el.value), !!el.checked]));
     try {
-    if (app?.state?.selection) {
-        app.state.selection.blocksActive = new Set(['1','2','3','4']);
-    }
-    for (const el of blockInputs) el.checked = true;
-    App.Filters?.applyAll?.();
-    
-    for (const [, hexEl] of app.cache?.hexById || []) {
-        hexEl.classList.remove('hex--dim-block');
-    }
-    grid.querySelectorAll('.hex--dim-block').forEach(el => el.classList.remove('hex--dim-block'));
+			// Export must ignore the current block subset and always render all blocks.
+			App.Filters?.setActiveBlocks?.(new Set(['1','2','3','4']), { apply: true });
     
     for (let i = 0; i < 12; i++) {
         await Util.nextFrame(1);
@@ -2668,11 +2697,7 @@ async function run() {
     triggerDownload(OUT.canvas.toDataURL('image/png'), 'CIS-overview.png');
     } finally {
         try {
-            if (app?.state?.selection) app.state.selection.blocksActive = prevBlocksActive;
-            for (const el of blockInputs) {
-                if (prevBlockChecks.has(String(el.value))) el.checked = prevBlockChecks.get(String(el.value));
-            }
-            App.Filters?.applyAll?.();
+            App.Filters?.setActiveBlocks?.(prevBlocksActive, { apply: true });
             await Util.nextFrame(1);
         } catch (_) {}
         restore();
