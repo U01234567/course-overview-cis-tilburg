@@ -1,6 +1,6 @@
 # Course Overview CIS (Tilburg University)
 
-Interactive, mobile-first visual of all MSc Communication and Information Sciences (CIS) courses (Tilburg University). Explore by Track, filter by block, theme, or individual courses, and tap hexagons for details. Includes a short guided tour for users and export of their tailored course overview.
+Interactive, mobile-first visual of all MSc Communication and Information Sciences (CIS) courses (Tilburg University). Explore by Track, filter by track, block, theme, or individual courses, and tap hexagons for details. Includes a short guided tour for users and export of their tailored course overview.
 
 # Who this is for
 
@@ -225,7 +225,7 @@ If no pattern is set for the current number of courses, the app auto-layouts.
 
 # Using the interface
 
-* Filter by Block, Theme, or toggle individual courses.
+* Filter by Track, Block, Theme, or toggle individual courses.
 * Click a hex for details; click again or press Esc to close.
 * Use “Center” to reset the view.
 * Use Download as PNG for a printable / shareable image.
