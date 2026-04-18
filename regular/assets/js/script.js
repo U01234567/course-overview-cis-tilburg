@@ -107,7 +107,8 @@ const App = {
         selection: {
             theme: null,
             hiddenIds: new Set(),
-            blocksActive: new Set(['1','2','3','4'])
+            blocksActive: new Set(['1','2','3','4']),
+            tracksActive: new Set(['BDM','CC','NMD'])
         },
 
         focusedId: null,
@@ -656,115 +657,244 @@ App.Osiris = (function (app) {
 })(App);
 
 /* =============================================================================
-    4) Filters (Blocks) — state-driven, composes with other filters
+    4) Filters (Blocks + Tracks) — state-driven, composes with other filters
 ============================================================================= */
-    App.Filters = (function (app) {
-        const ALL_BLOCK_VALUES = ['1','2','3','4'];
-        const ALL_BLOCKS = new Set(ALL_BLOCK_VALUES);
-        
-        function getBlockInputs() {
-            return Array.from(document.querySelectorAll('#blockFilterGroup input[name="blocks"]'));
+App.Filters = (function (app) {
+    const ALL_BLOCK_VALUES = ['1','2','3','4'];
+    const ALL_BLOCKS = new Set(ALL_BLOCK_VALUES);
+    const ALL_TRACK_VALUES = ['BDM','CC','NMD'];
+    const ALL_TRACKS = new Set(ALL_TRACK_VALUES);
+    
+    function getBlockInputs() {
+        return Array.from(document.querySelectorAll('#blockFilterGroup input[name="blocks"]'));
+    }
+    
+    function getTrackItems() {
+        return Array.from(document.querySelectorAll('#legendTracks .legend-item[data-track-key]'));
+    }
+    
+    function normalizeBlocks(active) {
+        const next = new Set();
+        for (const value of (active || [])) {
+            const block = String(value);
+            if (ALL_BLOCKS.has(block)) next.add(block);
         }
-        
-        function normalizeBlocks(active) {
-            const next = new Set();
-            for (const value of (active || [])) {
-                const block = String(value);
-                if (ALL_BLOCKS.has(block)) next.add(block);
-            }
-            return next;
+        return next;
+    }
+    
+    function normalizeTracks(active) {
+        const next = new Set();
+        for (const value of (active || [])) {
+            const track = String(value || '').toUpperCase().trim();
+            if (ALL_TRACKS.has(track)) next.add(track);
         }
-        
-        function isAllBlocksActive(active) {
-            const normalized = normalizeBlocks(active);
-            return (
-                normalized.size === ALL_BLOCK_VALUES.length &&
-                ALL_BLOCK_VALUES.every((block) => normalized.has(block))
-            );
+        return next;
+    }
+    
+    function isAllBlocksActive(active) {
+        const normalized = normalizeBlocks(active);
+        return (
+            normalized.size === ALL_BLOCK_VALUES.length &&
+            ALL_BLOCK_VALUES.every((block) => normalized.has(block))
+        );
+    }
+    
+    function isAllTracksActive(active) {
+        const normalized = normalizeTracks(active);
+        return (
+            normalized.size === ALL_TRACK_VALUES.length &&
+            ALL_TRACK_VALUES.every((track) => normalized.has(track))
+        );
+    }
+    
+    function syncBlockUI(active) {
+        const normalized = normalizeBlocks(active);
+        for (const el of getBlockInputs()) {
+            el.checked = normalized.has(String(el.value));
         }
-        
-        function syncBlockUI(active) {
-            const normalized = normalizeBlocks(active);
-            for (const el of getBlockInputs()) {
-                el.checked = normalized.has(String(el.value));
-            }
-        }
-        
-        function setActiveBlocks(active, { apply = true } = {}) {
-            const normalized = normalizeBlocks(active);
-            app.state.selection.blocksActive = normalized;
-            syncBlockUI(normalized);
-            if (apply) applyBlockDimming();
-            return normalized;
-        }
-        
-        function getNextBlocksAfterUserClick(clickedValue) {
-            const clicked = String(clickedValue);
-            const prevActive = normalizeBlocks(app.state.selection.blocksActive || ALL_BLOCKS);
+    }
+    
+    function syncTrackUI(active) {
+        const normalized = normalizeTracks(active);
+        for (const el of getTrackItems()) {
+            const track = String(el.getAttribute('data-track-key') || '').toUpperCase().trim();
+            const isActive = normalized.has(track);
+            el.classList.toggle('is-active', isActive);
+            el.classList.toggle('is-inactive', !isActive);
+            el.setAttribute('aria-pressed', isActive ? 'true' : 'false');
             
-            // Rule 1: all active -> isolate clicked block
-            if (isAllBlocksActive(prevActive)) {
-                return new Set([clicked]);
-            }
-            
-            // Rule 2: not all active -> toggle clicked block
-            if (prevActive.has(clicked)) {
-                prevActive.delete(clicked);
-            } else {
-                prevActive.add(clicked);
-            }			
-            return prevActive;
+            const label = Config.trackLabels?.[track] || track;
+            el.setAttribute('aria-label', `${label}${isActive ? ' selected' : ' not selected'}. Click to filter by track.`);
+        }
+    }
+    
+    function setActiveBlocks(active, { apply = true } = {}) {
+        const normalized = normalizeBlocks(active);
+        app.state.selection.blocksActive = normalized;
+        syncBlockUI(normalized);
+        if (apply) applyBlockDimming();
+        return normalized;
+    }
+    
+    function setActiveTracks(active, { apply = true } = {}) {
+        const normalized = normalizeTracks(active);
+        app.state.selection.tracksActive = normalized;
+        syncTrackUI(normalized);
+        if (apply) applyTrackDimming();
+        return normalized;
+    }
+    
+    function getNextBlocksAfterUserClick(clickedValue) {
+        const clicked = String(clickedValue);
+        const prevActive = normalizeBlocks(app.state.selection.blocksActive || ALL_BLOCKS);
+        
+        // Rule 1: all active -> isolate clicked block
+        if (isAllBlocksActive(prevActive)) {
+            return new Set([clicked]);
         }
         
-        function resetBlocksToAll(silent = false) {
-            setActiveBlocks(ALL_BLOCK_VALUES, { apply: true });
-            if (!silent) Util.toast('Blocks re-activated.');
+        // Rule 2: not all active -> toggle clicked block
+        if (prevActive.has(clicked)) {
+            prevActive.delete(clicked);
+        } else {
+            prevActive.add(clicked);
+        }
+        return prevActive;
+    }
+    
+    function getNextTracksAfterUserClick(clickedValue) {
+        const clicked = String(clickedValue || '').toUpperCase().trim();
+        const prevActive = normalizeTracks(app.state.selection.tracksActive || ALL_TRACKS);
+        
+        // Rule 1: all active -> isolate clicked track
+        if (isAllTracksActive(prevActive)) {
+            return new Set([clicked]);
         }
         
-        function initBlockFilterUI() {
-            if (!app.state.selection.blocksActive) {
-                app.state.selection.blocksActive = new Set(ALL_BLOCKS);
-            }
+        // Rule 2: not all active -> toggle clicked track
+        if (prevActive.has(clicked)) {
+            prevActive.delete(clicked);
+        } else {
+            prevActive.add(clicked);
+        }
+        return prevActive;
+    }
+    
+    function resetBlocksToAll(silent = false) {
+        setActiveBlocks(ALL_BLOCK_VALUES, { apply: true });
+        if (!silent) Util.toast('Blocks re-activated.');
+    }
+    
+    function resetTracksToAll(silent = false) {
+        setActiveTracks(ALL_TRACK_VALUES, { apply: true });
+        if (!silent) Util.toast('Tracks re-activated.');
+    }
+    
+    function initBlockFilterUI() {
+        if (!app.state.selection.blocksActive) {
+            app.state.selection.blocksActive = new Set(ALL_BLOCKS);
+        }
+        
+        syncBlockUI(app.state.selection.blocksActive);
+        
+        getBlockInputs().forEach((el) => {
+            el.addEventListener('change', () => {
+                const nextActive = getNextBlocksAfterUserClick(el.value);
+                setActiveBlocks(nextActive, { apply: true });
+            });
+        });
+        
+        applyBlockDimming();
+    }
+    
+    function initTrackFilterUI() {
+        if (!app.state.selection.tracksActive) {
+            app.state.selection.tracksActive = new Set(ALL_TRACKS);
+        }
+        
+        syncTrackUI(app.state.selection.tracksActive);
+        
+        getTrackItems().forEach((el) => {
+            if (el.dataset.trackFilterBound === '1') return;
             
-            syncBlockUI(app.state.selection.blocksActive);
+            const handleToggle = () => {
+                const track = el.getAttribute('data-track-key');
+                const nextActive = getNextTracksAfterUserClick(track);
+                setActiveTracks(nextActive, { apply: true });
+            };
             
-            getBlockInputs().forEach((el) => {
-                el.addEventListener('change', () => {
-                    const nextActive = getNextBlocksAfterUserClick(el.value);
-                    setActiveBlocks(nextActive, { apply: true });
-                });
+            el.addEventListener('click', (e) => {
+                if (e.target instanceof Element && e.target.closest('.info-btn')) return;
+                handleToggle();
             });
             
-            applyBlockDimming();
+            el.addEventListener('keydown', (e) => {
+                if (e.target instanceof Element && e.target.closest('.info-btn')) return;
+                if (e.key !== 'Enter' && e.key !== ' ') return;
+                e.preventDefault();
+                handleToggle();
+            });
+            
+            el.dataset.trackFilterBound = '1';
+        });
+        
+        applyTrackDimming();
+    }
+    
+    function courseMatchesActiveBlocks(course, active) {
+        // If a course has no block info, treat it as always visible.
+        const blocks = Array.isArray(course?.block) ? course.block : [];
+        if (blocks.length === 0) return true;
+        for (const b of blocks) {
+            if (active.has(String(b))) return true;
         }
-
-        function courseMatchesActiveBlocks(course, active) {
-            // If a course has no block info, treat it as always visible.
-            const blocks = Array.isArray(course?.block) ? course.block : [];
-            if (blocks.length === 0) return true;
-            for (const b of blocks) {
-                if (active.has(String(b))) return true;
-            }
-            return false;
+        return false;
+    }
+    
+    function courseMatchesActiveTracks(course, active) {
+        // If a course has no track info, treat it as always visible.
+        const tracks = Array.isArray(course?.tracks) ? course.tracks : [];
+        if (tracks.length === 0) return true;
+        for (const t of tracks) {
+            if (active.has(String(t).toUpperCase())) return true;
         }
-
-        function applyBlockDimming() {
-            const active = app.state.selection.blocksActive || ALL_BLOCKS;
-            // Iterate rendered hexes; do not interfere with other dim reasons.
-            for (const [id, hexEl] of app.cache.hexById || []) {
-                const course = app.cache.courseById.get(id);
-                const ok = courseMatchesActiveBlocks(course, active);
-                hexEl.classList.toggle('hex--dim-block', !ok);
-            }
+        return false;
+    }
+    
+    function applyBlockDimming() {
+        const active = app.state.selection.blocksActive || ALL_BLOCKS;
+        // Iterate rendered hexes; do not interfere with other dim reasons.
+        for (const [id, hexEl] of app.cache.hexById || []) {
+            const course = app.cache.courseById.get(id);
+            const ok = courseMatchesActiveBlocks(course, active);
+            hexEl.classList.toggle('hex--dim-block', !ok);
         }
-
-        return {
-            initBlockFilterUI,
-            applyAll: applyBlockDimming,
-            resetBlocksToAll,
-            setActiveBlocks
-        };
-    })(App);
+    }
+    
+    function applyTrackDimming() {
+        const active = app.state.selection.tracksActive || ALL_TRACKS;
+        for (const [id, hexEl] of app.cache.hexById || []) {
+            const course = app.cache.courseById.get(id);
+            const ok = courseMatchesActiveTracks(course, active);
+            hexEl.classList.toggle('hex--dim-track', !ok);
+        }
+    }
+    
+    function applyAll() {
+        applyBlockDimming();
+        applyTrackDimming();
+    }
+    
+    return {
+        initBlockFilterUI,
+        initTrackFilterUI,
+        applyAll,
+        resetBlocksToAll,
+        resetTracksToAll,
+        setActiveBlocks,
+        setActiveTracks
+    };
+})(App);
 
 /* =============================================================================
     5) Themes (deduplicated)
@@ -825,6 +955,7 @@ App.Actions = (function (app) {
         app.state.selection.theme = null;
         app.state.selection.hiddenIds = new Set();
         App.Filters.resetBlocksToAll(true); // silent toast; we'll show one consolidated toast below
+        App.Filters.resetTracksToAll(true);
         
         // 2) Theme UI reset
         const themeInputs = document.querySelectorAll('#themeGroup input');
@@ -847,7 +978,7 @@ App.Actions = (function (app) {
         // 4) Clear any dimming/hidden flags on tiles (theme/blocks/courses)
         if (app.cache?.hexById) {
             for (const [, hexEl] of app.cache.hexById) {
-                hexEl.classList.remove('hex--dim', 'hex--dim-block', 'hex--hidden', 'hex--focus');
+                hexEl.classList.remove('hex--dim', 'hex--dim-block', 'hex--dim-track', 'hex--hidden', 'hex--focus');
             }
         }
         App.Interaction.applyFilter();
@@ -855,7 +986,7 @@ App.Actions = (function (app) {
         // 5) Recentering as part of "reset view"
         if (recenter && app.el.centerBtn) app.el.centerBtn.click();
         
-        if (!silent) Util.toast('Reset: blocks, themes, and courses restored.');
+        if (!silent) Util.toast('Reset: tracks, blocks, themes, and courses restored.');
     }
     
     return { resetAll };
@@ -916,6 +1047,7 @@ App.UI = (function (app) {
         bindDockControls();
         bindInfoClose();
         App.Filters.initBlockFilterUI();
+        App.Filters.initTrackFilterUI();
 
         window.addEventListener('resize', () => {
             updateDockToggleUI();
@@ -935,7 +1067,7 @@ App.UI = (function (app) {
             const confirmed = confirm(
                 'Reset your overview?\n\n' +
                 'This will:\n' +
-                '• Select all courses and blocks again\n' +
+                '• Select all courses, tracks, and blocks again\n' +
                 '• Deactivate any active themes\n' +
                 '• Restore the default view\n\n' +
                 'Are you sure?'
@@ -1044,7 +1176,10 @@ App.UI = (function (app) {
             btn.addEventListener('mouseleave', hide);
             btn.addEventListener('focus', show);
             btn.addEventListener('blur', hide);
-            btn.addEventListener('click', toggle);
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                toggle();
+            });
 
             item.addEventListener('mouseenter', show);
             item.addEventListener('mouseleave', hide);
@@ -1604,7 +1739,7 @@ App.UI = (function (app) {
             const cs = getComputedStyle(group);
             const gap = parseFloat(cs.rowGap || cs.gap || '8');
 
-            const target = (r.height * 3.8) + (gap * 2.0);
+            const target = (r.height * 5.8) + (gap * 4.0);
             group.style.maxHeight = `${target}px`;
             group.style.paddingBottom = `${gap * 0.25}px`;
             updateWorkspaceReserve();
@@ -2521,9 +2656,11 @@ async function run() {
 
     const restore = hideChrome();
     const prevBlocksActive = new Set(app?.state?.selection?.blocksActive || []);
+    const prevTracksActive = new Set(app?.state?.selection?.tracksActive || []);
     try {
 			// Export must ignore the current block subset and always render all blocks.
 			App.Filters?.setActiveBlocks?.(new Set(['1','2','3','4']), { apply: true });
+            App.Filters?.setActiveTracks?.(new Set(['BDM','CC','NMD']), { apply: true });
     
     for (let i = 0; i < 12; i++) {
         await Util.nextFrame(1);
@@ -2532,6 +2669,7 @@ async function run() {
         const anyDimOrHidden = hexes.some(h =>
             h.classList.contains('hex--dim') ||
             h.classList.contains('hex--dim-block') ||
+            h.classList.contains('hex--dim-track') ||
             h.classList.contains('hex--hidden')
         );
         const allOpaque = hexes.every(h => (parseFloat(getComputedStyle(h).opacity || '1') >= 0.985));
@@ -2697,6 +2835,7 @@ async function run() {
     triggerDownload(OUT.canvas.toDataURL('image/png'), 'CIS-overview.png');
     } finally {
         try {
+            App.Filters?.setActiveTracks?.(prevTracksActive, { apply: true });
             App.Filters?.setActiveBlocks?.(prevBlocksActive, { apply: true });
             await Util.nextFrame(1);
         } catch (_) {}
