@@ -1508,7 +1508,7 @@ App.UI = (function (app) {
         const code = Util.escapeHtml(item.code || '—');
         const tracks = Util.escapeHtml((item.tracks || []).join(', ') || '—');
         const blocks = Util.escapeHtml((item.block || []).join(', ') || '—');
-        const osirisUrl = `https://uvt.osiris-student.nl/onderwijscatalogus/extern/cursus?cursuscode=${encodeURIComponent(code)}&collegejaar=${encodeURIComponent(App.Osiris.startAY())}?taal=en`;
+        const osirisUrl = `https://uvt.osiris-student.nl/onderwijscatalogus/extern/cursus?cursuscode=${encodeURIComponent(code)}&collegejaar=${encodeURIComponent(App.Osiris.startAY())}&taal=en`;
         const osirisLink = `<a href="${Util.escapeAttr(osirisUrl)}" target="_blank" rel="noopener">Osiris</a>`;
         const description = Util.escapeHtml(item.description || '—');
 
