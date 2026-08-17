@@ -613,20 +613,20 @@ App.Domain = (function () {
 ============================================================================= */
 App.Osiris = (function (app) {
     const _cache = new Map();
-    let _startAY = '2025';
+    let _startAY = '2026';
     let _configCache = null;
 
     function loadConfig() {
         if (_configCache) return _configCache;
         if (window.__CIS_CONFIG__ && typeof window.__CIS_CONFIG__ === 'object') {
             _configCache = window.__CIS_CONFIG__;
-            _startAY = String(_configCache.start_AY || '2025').trim();
+            _startAY = String(_configCache.start_AY || '2026').trim();
             return _configCache;
         }
         try {
             const raw = document.getElementById('configData')?.textContent || '{}';
             _configCache = JSON.parse(raw) || {};
-            _startAY = String(_configCache.start_AY || '2025').trim();
+            _startAY = String(_configCache.start_AY || '2026').trim();
         } catch (e) {
             console.warn('[configData] Failed to parse; falling back to defaults.', e);
             _configCache = { start_AY: _startAY };
