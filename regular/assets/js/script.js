@@ -3183,16 +3183,18 @@ async function start() {
     if (window.CIS_DATA_URLS) {
         try {
             const u = window.CIS_DATA_URLS;
-            const [courses, themes, overview, tips] = await Promise.all([
+            const [courses, themes, overview, tips, config] = await Promise.all([
                 fetch(u.courses).then(r => r.json()),
                 fetch(u.themes).then(r => r.json()),
                 fetch(u.overview).then(r => r.json()),
-                fetch(u.tips).then(r => r.json())
+                fetch(u.tips).then(r => r.json()),
+                fetch(u.config).then(r => r.json())
             ]);
             window.__CIS_COURSES__  = Array.isArray(courses)  ? courses  : [];
             window.__CIS_THEMES__   = Array.isArray(themes)   ? themes   : [];
             window.__CIS_OVERVIEW__ = (overview && typeof overview === 'object') ? overview : {};
             window.__CIS_TIPS__     = Array.isArray(tips)     ? tips     : [];
+            window.__CIS_CONFIG__   = (config && typeof config === 'object') ? config : {};
         } catch (e) {
             console.warn('[CIS] Failed to fetch external JSON; falling back to inline data.', e);
         }
