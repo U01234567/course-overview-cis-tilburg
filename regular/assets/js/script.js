@@ -1505,19 +1505,21 @@ App.UI = (function (app) {
 
     function showInfo(item) {
         const title = Util.escapeHtml(item.title);
-        const code = Util.escapeHtml(item.code || '—');
+        const code = Util.escapeHtml(item.code);
         const tracks = Util.escapeHtml((item.tracks || []).join(', ') || '—');
         const blocks = Util.escapeHtml((item.block || []).join(', ') || '—');
         const osirisUrl = `https://uvt.osiris-student.nl/onderwijscatalogus/extern/cursus?cursuscode=${encodeURIComponent(code)}&collegejaar=${encodeURIComponent(App.Osiris.startAY())}&taal=en`;
         const osirisLink = `<a href="${Util.escapeAttr(osirisUrl)}" target="_blank" rel="noopener">Osiris</a>`;
+        const heading = item.code ? `${title} (${code})` : title;
+        const readMore = item.code ? `read more in ${osirisLink}` : 'more information will be available on Osiris soon';
         const description = Util.escapeHtml(item.description || '—');
 
         const html = `
-            <strong>${title} (${code})</strong>
+            <strong>${heading}</strong>
             <hr>
             <strong>Track(s):</strong> ${tracks}<br>
             <strong>Block:</strong> ${blocks}<br>
-            <strong>Description:</strong> (read more in ${osirisLink})<br><br>
+            <strong>Description:</strong> (${readMore})<br><br>
             ${description}
         `;
 
