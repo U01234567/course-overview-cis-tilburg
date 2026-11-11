@@ -3197,6 +3197,7 @@ async function start() {
             window.__CIS_CONFIG__   = (config && typeof config === 'object') ? config : {};
         } catch (e) {
             console.warn('[CIS] Failed to fetch external JSON; falling back to inline data.', e);
+            Util.toast('[data/*.json] Could not load or parse the data files. Check for trailing commas or comments.', 9000);
         }
     }
 
