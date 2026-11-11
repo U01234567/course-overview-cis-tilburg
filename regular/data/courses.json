@@ -132,7 +132,7 @@
         "tracks": ["BDM", "CC", "NMD"],
         "themes": ["Design", "Tech", "Health"],
         "code": "",
-        "block": [],
+        "block": ["2"],
         "description": "Digital Health Implementation asks how we can know whether a digital innovation actually works, and explores a range of evaluation approaches. We also study the adoption and implementation of digital health innovations as well as the ethical, legal, and societal considerations regarding digital health innovations. The course presents several models of technology adoption, resistance and persuasion, and discusses theories and case studies of organizational implementation, with a focus on healthcare."
     },
     {
